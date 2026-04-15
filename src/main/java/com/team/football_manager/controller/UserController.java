@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -15,37 +18,51 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerPlayer(@RequestBody User user) {
-        String fullName = user.getFullName() != null ? user.getFullName().trim() : "";
+        try {
+            String fullName = user.getFullName() != null ? user.getFullName().trim().replaceAll("\\s+", " ") : "";
 
-        if (fullName.isEmpty()) {
-            return ResponseEntity.badRequest().body("الاسم مطلوب");
+            if (fullName.isEmpty()) {
+                return ResponseEntity.badRequest().body("الاسم مطلوب");
+            }
+
+            if (userRepository.findByFullName(fullName).isPresent()) {
+                return ResponseEntity.badRequest().body("اللاعب مسجل مسبقًا");
+            }
+
+            User newUser = new User();
+            newUser.setFullName(fullName);
+            newUser.setUsername(fullName);
+            newUser.setAge(user.getAge());
+            newUser.setRole("PLAYER");
+
+            // مهم لتفادي مشاكل الجداول القديمة إذا كان password مطلوبًا
+            newUser.setPassword("");
+
+            User saved = userRepository.save(newUser);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "تم التسجيل بنجاح");
+            response.put("id", saved.getId());
+            response.put("fullName", saved.getFullName());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("فشل التسجيل: " + e.getMessage());
         }
-
-        if (userRepository.findByFullName(fullName).isPresent()) {
-            return ResponseEntity.badRequest().body("اللاعب مسجل مسبقًا");
-        }
-
-        user.setFullName(fullName);
-        user.setUsername(fullName);
-        user.setRole("PLAYER");
-
-        if (user.getAge() < 0) {
-            user.setAge(0);
-        }
-
-        return ResponseEntity.ok(userRepository.save(user));
     }
 
     @GetMapping("/check")
     public String checkPlayer(@RequestParam String name) {
-        String cleanedName = name == null ? "" : name.trim();
+        String cleanedName = name == null ? "" : name.trim().replaceAll("\\s+", " ");
 
         if (cleanedName.isEmpty()) {
             return "NOT_FOUND";
         }
 
         boolean exists = userRepository.findByFullName(cleanedName).isPresent();
-
         return exists ? "FOUND" : "NOT_FOUND";
     }
 }
