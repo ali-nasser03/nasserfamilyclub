@@ -4,10 +4,9 @@ WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-# المرحلة الثانية: التشغيل بأخف نسخة ممكنة
-FROM openjdk:17-jdk-alpine
+# المرحلة الثانية: التشغيل (باستخدام نسخة أمازون المستقرة)
+FROM amazoncorretto:17-alpine-jdk
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-# إضافة سطر لزيادة سرعة التشغيل وتجنب اللون الأسود
-ENTRYPOINT ["java", "-Xmx512m", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
