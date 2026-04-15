@@ -11,31 +11,38 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f2f5;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .login-card {
-            background-color: white;
+            background-color: #f0f2f5;
             background-image:
-                linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88)),
-                url('logo.jpg');
+                linear-gradient(rgba(255,255,255,0.82), rgba(255,255,255,0.82)),
+                url('/logo.jpg');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
+        }
+
+        .login-card {
+            background-color: rgba(255,255,255,0.95);
             padding: 40px;
             border-radius: 30px;
             width: 420px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
             text-align: center;
             border: 1px solid #eee;
             box-sizing: border-box;
         }
 
         h1 {
-            font-size: 2em;
+            font-size: 2.2em;
             color: #000;
+            margin-bottom: 20px;
+        }
+
+        .hint {
+            font-size: 1em;
+            color: #333;
             margin-bottom: 25px;
+            line-height: 1.7;
         }
 
         input {
@@ -44,10 +51,10 @@
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 12px;
-            font-size: 1.05em;
+            font-size: 1.1em;
             text-align: center;
             box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255,255,255,0.98);
         }
 
         .btn {
@@ -56,7 +63,7 @@
             margin-bottom: 12px;
             border: none;
             border-radius: 12px;
-            font-size: 1.1em;
+            font-size: 1.15em;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
@@ -64,25 +71,46 @@
         }
 
         .btn-login {
-            background-color: #28a745;
+            background-color: #1f7a34;
         }
 
         .btn-login:hover {
-            background-color: #218838;
+            background-color: #176229;
         }
 
         .btn-register {
-            background-color: #007bff;
+            background-color: #0a4f96;
         }
 
         .btn-register:hover {
+            background-color: #083f77;
+        }
+
+        .register-box {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .register-box.active {
+            display: block;
+        }
+
+        .btn-confirm {
+            background-color: #007bff;
+        }
+
+        .btn-confirm:hover {
             background-color: #0069d9;
         }
 
-        .hint {
-            font-size: 0.9em;
-            color: #444;
-            margin-bottom: 20px;
+        .btn-cancel {
+            background-color: #6c757d;
+        }
+
+        .btn-cancel:hover {
+            background-color: #5a6268;
         }
     </style>
 </head>
@@ -90,18 +118,40 @@
 
 <div class="login-card">
     <h1>دخول الفريق</h1>
-    <div class="hint">الدخول يكون بالاسم الكامل، والتسجيل أول مرة بالاسم والعمر</div>
 
-    <input type="text" id="username" placeholder="أدخل اسمك الثلاثي">
-    <input type="number" id="age" placeholder="أدخل عمرك عند التسجيل فقط" min="1">
+    <div class="hint">
+        الدخول يكون بالاسم الكامل، والتسجيل أول مرة بالاسم والعمر
+    </div>
 
-    <button class="btn btn-login" onclick="login()">دخول</button>
-    <button class="btn btn-register" onclick="registerPlayer()">تسجيل لاعب جديد</button>
+    <!-- قسم الدخول فقط -->
+    <div id="loginSection">
+        <input type="text" id="username" placeholder="أدخل اسمك الكامل">
+        <button class="btn btn-login" onclick="login()">دخول</button>
+        <button class="btn btn-register" onclick="showRegisterForm()">تسجيل لاعب جديد</button>
+    </div>
+
+    <!-- قسم التسجيل يظهر عند الضغط -->
+    <div id="registerSection" class="register-box">
+        <input type="text" id="registerName" placeholder="أدخل الاسم الثلاثي">
+        <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
+        <button class="btn btn-confirm" onclick="registerPlayer()">تأكيد التسجيل</button>
+        <button class="btn btn-cancel" onclick="hideRegisterForm()">إلغاء</button>
+    </div>
 </div>
 
 <script>
     function normalizeName(name) {
         return name.trim().replace(/\s+/g, ' ');
+    }
+
+    function showRegisterForm() {
+        document.getElementById('registerSection').classList.add('active');
+    }
+
+    function hideRegisterForm() {
+        document.getElementById('registerSection').classList.remove('active');
+        document.getElementById('registerName').value = "";
+        document.getElementById('registerAge').value = "";
     }
 
     async function login() {
@@ -124,7 +174,7 @@
             const result = await res.text();
 
             if (result !== "FOUND") {
-                alert("الاسم غير مسجل. قم بالتسجيل أولًا.");
+                alert("الاسم غير مسجل. اضغط على تسجيل لاعب جديد أولًا.");
                 return;
             }
 
@@ -137,9 +187,9 @@
     }
 
     async function registerPlayer() {
-        const rawName = document.getElementById('username').value;
+        const rawName = document.getElementById('registerName').value;
         const name = normalizeName(rawName);
-        const ageValue = document.getElementById('age').value;
+        const ageValue = document.getElementById('registerAge').value;
 
         if (!name) {
             alert("يرجى إدخال الاسم الثلاثي");
@@ -175,61 +225,15 @@
                 return;
             }
 
-            alert("تم تسجيلك بنجاح");
-            document.getElementById('age').value = "";
-        } catch (e) {
-            alert("حدث خطأ أثناء التسجيل");
-            console.error(e);
-        }
-    }
-
-
-    async function registerPlayer() {
-        const rawName = document.getElementById('username').value;
-        const name = normalizeName(rawName);
-        const ageValue = document.getElementById('age').value;
-
-        if (!name) {
-            alert("يرجى إدخال الاسم الثلاثي");
-            return;
-        }
-
-        if (!ageValue) {
-            alert("يرجى إدخال العمر للتسجيل أول مرة");
-            return;
-        }
-
-        const age = parseInt(ageValue, 10);
-
-        if (isNaN(age) || age <= 0) {
-            alert("يرجى إدخال عمر صحيح");
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/users/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fullName: name,
-                    age: age
-                })
-            });
-
-            const text = await res.text();
-
-            if (!res.ok) {
-                alert(text || "حدث خطأ في التسجيل");
-                return;
-            }
-
-            alert("تم تسجيل اللاعب بنجاح، يمكنك الدخول الآن");
-            document.getElementById('age').value = "";
+            alert("تم تسجيل اللاعب بنجاح");
+            hideRegisterForm();
+            document.getElementById('username').value = name;
         } catch (e) {
             alert("حدث خطأ أثناء التسجيل");
             console.error(e);
         }
     }
 </script>
+
 </body>
 </html>
