@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>صفحة اللاعب</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .card {
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 25px;
+            border-radius: 20px;
+            width: 350px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn {
+            padding: 15px;
+            width: 100%;
+            margin: 8px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-yes {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-no {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-logout {
+            background: #34495e;
+            color: white;
+        }
+
+        .table-container {
+            background: white;
+            color: #333;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<script>
+    const fullName = localStorage.getItem('fullName');
+
+    if (!fullName) {
+        window.location.href = 'login.html';
+    }
+</script>
+
+<div class="card">
+    <h2 id="pName">كابتن</h2>
+    <div id="mInfo" style="background:#dfe6e9; padding:10px; border-radius:8px; font-size:0.85em; margin-bottom:10px;">
+        جاري التحميل...
+    </div>
+    <div id="myStatus" style="font-weight:bold; margin-bottom:15px;"></div>
+    <button class="btn btn-yes" onclick="vote('YES')">⚽ سأحضر</button>
+    <button class="btn btn-no" onclick="vote('NO')">❌ أعتذر</button>
+    <button class="btn btn-logout" onclick="logout()">تسجيل الخروج</button>
+</div>
+
+<div class="table-container">
+    <h3 style="text-align: center; color: #2c3e50; margin-top: 0;">📊 قائمة الحضور</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>اللاعب</th>
+            <th>الحالة</th>
+        </tr>
+        </thead>
+        <tbody id="pBody"></tbody>
+    </table>
+</div>
+
+<script>
+    document.getElementById('pName').innerText = "كابتن " + fullName;
+
+    async function update() {
+        try {
+            const mRes = await fetch('/api/matches/latest');
+            const m = await mRes.json();
+
+            if (m) {
+                document.getElementById('mInfo').innerHTML =
+                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}`;
+            } else {
+                document.getElementById('mInfo').innerHTML = "لا توجد مباراة منشورة حاليًا";
+            }
+
+            const res = await fetch('/api/attendance/active-list');
+            const data = await res.json();
+
+            const me = data.find(p => p.name === fullName);
+            if (me) {
+                document.getElementById('myStatus').innerHTML = me.paid
+                    ? "<span style='color:green'>✅ حالة دفعك: دافع</span>"
+                    : "<span style='color:red'>⏳ حالة دفعك: لم تدفع</span>";
+            } else {
+                document.getElementById('myStatus').innerHTML =
+                    "<span style='color:#555'>أنت مسجل لكن لم يظهر لك سجل دفع بعد</span>";
+            }
+
+            const yes = data.filter(p => p.status.includes('✅'));
+            const no = data.filter(p => p.status.includes('❌'));
+            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+
+            let html = "";
+            html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`).join('');
+            html += no.map(p => `<tr><td>${p.name}</td><td style="color:red; font-weight:bold;">معتذر ❌</td></tr>`).join('');
+            html += wait.map(p => `<tr><td>${p.name}</td><td style="color:gray;">لم يصوت</td></tr>`).join('');
+
+            document.getElementById('pBody').innerHTML = html;
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function vote(status) {
+        try {
+            await fetch('/api/attendance/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ playerName: fullName, status: status })
+            });
+            update();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('fullName');
+        window.location.href = 'login.html';
+    }
+
+    window.onload = update;
+</script>
+</body>
+</html>
