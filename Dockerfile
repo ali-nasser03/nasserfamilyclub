@@ -1,10 +1,13 @@
-# المرحلة الأولى: بناء المشروع باستخدام Maven
+# المرحلة الأولى: بناء المشروع
 FROM maven:3.8.5-openjdk-17 AS build
+WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-# المرحلة الثانية: تشغيل التطبيق باستخدام Java 17
-FROM eclipse-temurin:17-jdk-jammy
-COPY --from=build /target/*.jar app.jar
+# المرحلة الثانية: التشغيل بأخف نسخة ممكنة
+FROM openjdk:17-jdk-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app.jar"]
+# إضافة سطر لزيادة سرعة التشغيل وتجنب اللون الأسود
+ENTRYPOINT ["java", "-Xmx512m", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
