@@ -113,7 +113,6 @@
             return;
         }
 
-        // الأدمن يدخل مباشرة
         if (name === "Admin" || name === "محمود ناصر") {
             localStorage.setItem('fullName', name);
             window.location.href = 'admin.html';
@@ -136,6 +135,54 @@
             console.error(e);
         }
     }
+
+    async function registerPlayer() {
+        const rawName = document.getElementById('username').value;
+        const name = normalizeName(rawName);
+        const ageValue = document.getElementById('age').value;
+
+        if (!name) {
+            alert("يرجى إدخال الاسم الثلاثي");
+            return;
+        }
+
+        if (!ageValue) {
+            alert("يرجى إدخال العمر");
+            return;
+        }
+
+        const age = parseInt(ageValue, 10);
+
+        if (isNaN(age) || age <= 0) {
+            alert("يرجى إدخال عمر صحيح");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/users/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fullName: name,
+                    age: age
+                })
+            });
+
+            const text = await res.text();
+
+            if (!res.ok) {
+                alert(text);
+                return;
+            }
+
+            alert("تم تسجيلك بنجاح");
+            document.getElementById('age').value = "";
+        } catch (e) {
+            alert("حدث خطأ أثناء التسجيل");
+            console.error(e);
+        }
+    }
+
 
     async function registerPlayer() {
         const rawName = document.getElementById('username').value;
