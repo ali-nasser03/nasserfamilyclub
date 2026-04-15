@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة تحكم الأدمن</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Amiri', serif;
+            background-color: #2c3e50;
+            background-image:
+                /* ⭐ سنضع الشعار كعلامة مائية شفافة في الأسفل */
+                url('data:image/png;base64,') /* سنضع كود الشعار هنا */,
+                radial-gradient(circle, #34495e 10%, #2c3e50 90%);
+            background-repeat: no-repeat, no-repeat;
+            background-position: center bottom, center; /* الشعار في الأسفل */
+            background-attachment: fixed;
+            background-size: contain, cover;
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9); /* شفافية بنسبة 90% */
+            color: #2c3e50; /* لون نص الكرت */
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* ظل لإبراز الكرت */
+            width: 380px;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        h2 { border-bottom: 2px solid rgba(108, 122, 137, 0.5); padding-bottom: 10px; color: #2c3e50; }
+        .section-header { background: rgba(52, 73, 94, 0.1); padding: 8px 12px; font-weight: bold; margin-top: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; color: #555; }
+        .row { display: flex; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid rgba(108, 122, 137, 0.2); align-items: center; }
+        input, button { padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        .btn-post { background: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .btn-post:hover { background: #219150; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>🗓️ مباراة جديدة</h2>
+    <input type="text" id="loc" placeholder="المكان">
+    <input type="datetime-local" id="dt">
+    <button class="btn-post" onclick="createNewMatch()">نشر المباراة</button>
+</div>
+
+<div class="card">
+    <h2>🗳️ قائمة التصويت</h2>
+    <div id="voteList"></div>
+</div>
+
+<div class="card">
+    <h2>الدفع 💰</h2>
+    <div id="payList"></div>
+    <button onclick="resetMonth()" style="background:#e67e22; color:white; border:none; cursor:pointer; margin-top:10px; padding: 12px; border-radius: 8px; font-weight: bold;">تصفير الشهر</button>
+</div>
+
+<script>
+    async function load() {
+        try {
+            const res = await fetch('/api/attendance/active-list');
+            const data = await res.json();
+
+            // الترتيب: حاضر -> معتذر -> لم يصوت
+            const yes = data.filter(p => p.status.includes('✅'));
+            const no = data.filter(p => p.status.includes('❌'));
+            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+
+            let vHtml = "";
+            if(yes.length) vHtml += `<div class="section-header"><span>⚽ حاضرون</span><span>(${yes.length})</span></div>` + yes.map(p=>`<div class="row"><span>${p.name}</span><span style="color:green; font-weight:bold;">✅</span></div>`).join('');
+            if(no.length) vHtml += `<div class="section-header"><span>❌ معتذرون</span><span>(${no.length})</span></div>` + no.map(p=>`<div class="row"><span>${p.name}</span><span style="color:red; font-weight:bold;">❌</span></div>`).join('');
+            if(wait.length) vHtml += `<div class="section-header"><span>⏳ لم يصوتوا</span><span>(${wait.length})</span></div>` + wait.map(p=>`<div class="row"><span>${p.name}</span><span style="color:gray;">لم يصوت</span></div>`).join('');
+
+            document.getElementById('voteList').innerHTML = vHtml || "<p style='text-align:center'>لا يوجد لاعبين</p>";
+
+            document.getElementById('payList').innerHTML = data.map(p => `
+                <div class="row"><span>${p.name}</span><input type="checkbox" style="width:auto" ${p.paid?'checked':''} onchange="toggle(${p.id})"></div>
+            `).join('');
+        } catch (e) { console.error("Error loading data"); }
+    }
+
+    async function createNewMatch() {
+        const location = document.getElementById('loc').value;
+        const dateTime = document.getElementById('dt').value;
+        if(!location || !dateTime) return alert("عبئ المكان والوقت أولاً");
+
+        if(confirm("تصفير القائمة ونشر المباراة الجديدة؟")) {
+            await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+            const res = await fetch('/api/matches/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ location, dateTime, active: true })
+            });
+            if(res.ok) {
+                alert("تم! القائمة جاهزة للمباراة الجديدة. ⚽");
+                document.getElementById('loc').value = "";
+                document.getElementById('dt').value = "";
+                load();
+            }
+        }
+    }
+
+    async function toggle(id) { await fetch(`/api/attendance/toggle-payment/${id}`, {method:'POST'}); load(); }
+    async function resetMonth() { if(confirm("تصفير الدفع للجميع؟")) { await fetch('/api/attendance/reset-month', {method:'POST'}); load(); } }
+    window.onload = load;
+</script>
+</body>
+</html>

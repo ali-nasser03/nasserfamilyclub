@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دخول الفريق</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5; /* خلفية الصفحة الخارجية */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .login-card {
+            background-color: white;
+            /* إضافة الشعار كخلفية داخل الكارد */
+            background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('logo.jpg');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            padding: 40px;
+            border-radius: 30px;
+            width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        h1 {
+            font-size: 2.2em;
+            color: #000;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 1.1em;
+            text-align: center;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            color: white;
+        }
+
+        .btn-login {
+            background-color: #28a745; /* اللون الأخضر */
+        }
+
+        .btn-login:hover {
+            background-color: #218838;
+        }
+
+        .btn-register {
+            background-color: #007bff; /* اللون الأزرق */
+        }
+
+        .btn-register:hover {
+            background-color: #0069d9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h1></h1>
+
+    <input type="text" id="username" placeholder="أدخل اسمك الكامل">
+
+    <button class="btn btn-login" onclick="login()">دخول</button>
+    <button class="btn btn-register" onclick="register()">تسجيل لاعب جديد</button>
+</div>
+
+<script>
+    function login() {
+    const name = document.getElementById('username').value;
+    if (name.trim() === "") {
+        alert("يرجى إدخال الاسم");
+        return;
+    }
+
+    // تخزين الاسم
+    localStorage.setItem('fullName', name);
+
+    // منطق التحقق من الأدمن
+    if (name === "Admin" || name === "محمود ناصر") { // يمكنك وضع اسمك هنا
+        window.location.href = 'admin.html'; // تحويل للوحة التحكم
+    } else {
+        window.location.href = 'player.html'; // تحويل لصفحة اللاعبين
+    }
+}
+
+    function register() {
+        // هنا يمكنك توجيه المستخدم لصفحة تسجيل أو فتح Modal
+        alert("تواصل مع الأدمن لتسجيل اسمك في النظام.");
+    }
+</script>
+</body>
+</html>
