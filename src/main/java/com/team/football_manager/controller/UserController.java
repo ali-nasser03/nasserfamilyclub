@@ -3,6 +3,7 @@ package com.team.football_manager.controller;
 import com.team.football_manager.model.User;
 import com.team.football_manager.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,21 +14,38 @@ public class UserController {
     private UserRepository userRepository;
 
     @PostMapping("/register")
-    public User registerPlayer(@RequestBody User user) {
-        user.setRole("PLAYER"); // أي شخص يسجل من الخارج هو لاعب تلقائياً
-        return userRepository.save(user);
+    public ResponseEntity<?> registerPlayer(@RequestBody User user) {
+        String fullName = user.getFullName() != null ? user.getFullName().trim() : "";
+
+        if (fullName.isEmpty()) {
+            return ResponseEntity.badRequest().body("الاسم مطلوب");
+        }
+
+        if (userRepository.findByFullName(fullName).isPresent()) {
+            return ResponseEntity.badRequest().body("اللاعب مسجل مسبقًا");
+        }
+
+        user.setFullName(fullName);
+        user.setUsername(fullName);
+        user.setRole("PLAYER");
+
+        if (user.getAge() < 0) {
+            user.setAge(0);
+        }
+
+        return ResponseEntity.ok(userRepository.save(user));
     }
 
     @GetMapping("/check")
     public String checkPlayer(@RequestParam String name) {
-        // تنظيف الاسم من أي مسافات زائدة قد تأتي من المتصفح
-        String cleanedName = name.trim();
+        String cleanedName = name == null ? "" : name.trim();
 
-        System.out.println("Searching for player: [" + cleanedName + "]"); // سيظهر لك في IntelliJ ماذا يبحث
+        if (cleanedName.isEmpty()) {
+            return "NOT_FOUND";
+        }
 
         boolean exists = userRepository.findByFullName(cleanedName).isPresent();
 
-        System.out.println("Result found: " + exists);
         return exists ? "FOUND" : "NOT_FOUND";
     }
 }
