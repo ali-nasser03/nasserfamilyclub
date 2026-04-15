@@ -11,46 +11,43 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f2f5; /* خلفية الصفحة الخارجية */
+            background-color: #f0f2f5;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .login-card {
             background-color: white;
-            /* إضافة الشعار كخلفية داخل الكارد */
-            background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('logo.jpg');
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88)),
+                url('logo.jpg');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
-
             padding: 40px;
             border-radius: 30px;
-            width: 400px;
+            width: 420px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
             border: 1px solid #eee;
+            box-sizing: border-box;
         }
 
         h1 {
-            font-size: 2.2em;
+            font-size: 2em;
             color: #000;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
+            margin-bottom: 25px;
         }
 
         input {
             width: 100%;
             padding: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 12px;
-            font-size: 1.1em;
+            font-size: 1.05em;
             text-align: center;
             box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .btn {
@@ -59,7 +56,7 @@
             margin-bottom: 12px;
             border: none;
             border-radius: 12px;
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
@@ -67,7 +64,7 @@
         }
 
         .btn-login {
-            background-color: #28a745; /* اللون الأخضر */
+            background-color: #28a745;
         }
 
         .btn-login:hover {
@@ -75,47 +72,116 @@
         }
 
         .btn-register {
-            background-color: #007bff; /* اللون الأزرق */
+            background-color: #007bff;
         }
 
         .btn-register:hover {
             background-color: #0069d9;
+        }
+
+        .hint {
+            font-size: 0.9em;
+            color: #444;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
 
 <div class="login-card">
-    <h1></h1>
+    <h1>دخول الفريق</h1>
+    <div class="hint">الدخول يكون بالاسم الكامل، والتسجيل أول مرة بالاسم والعمر</div>
 
-    <input type="text" id="username" placeholder="أدخل اسمك الكامل">
+    <input type="text" id="username" placeholder="أدخل اسمك الثلاثي">
+    <input type="number" id="age" placeholder="أدخل عمرك عند التسجيل فقط" min="1">
 
     <button class="btn btn-login" onclick="login()">دخول</button>
-    <button class="btn btn-register" onclick="register()">تسجيل لاعب جديد</button>
+    <button class="btn btn-register" onclick="registerPlayer()">تسجيل لاعب جديد</button>
 </div>
 
 <script>
-    function login() {
-    const name = document.getElementById('username').value;
-    if (name.trim() === "") {
-        alert("يرجى إدخال الاسم");
-        return;
+    function normalizeName(name) {
+        return name.trim().replace(/\s+/g, ' ');
     }
 
-    // تخزين الاسم
-    localStorage.setItem('fullName', name);
+    async function login() {
+        const rawName = document.getElementById('username').value;
+        const name = normalizeName(rawName);
 
-    // منطق التحقق من الأدمن
-    if (name === "Admin" || name === "محمود ناصر") { // يمكنك وضع اسمك هنا
-        window.location.href = 'admin.html'; // تحويل للوحة التحكم
-    } else {
-        window.location.href = 'Player.html'; // تحويل لصفحة اللاعبين
+        if (!name) {
+            alert("يرجى إدخال الاسم");
+            return;
+        }
+
+        // الأدمن يدخل مباشرة
+        if (name === "Admin" || name === "محمود ناصر") {
+            localStorage.setItem('fullName', name);
+            window.location.href = 'admin.html';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/users/check?name=${encodeURIComponent(name)}`);
+            const result = await res.text();
+
+            if (result !== "FOUND") {
+                alert("الاسم غير مسجل. قم بالتسجيل أولًا.");
+                return;
+            }
+
+            localStorage.setItem('fullName', name);
+            window.location.href = 'player.html';
+        } catch (e) {
+            alert("حدث خطأ أثناء تسجيل الدخول");
+            console.error(e);
+        }
     }
-}
 
-    function register() {
-        // هنا يمكنك توجيه المستخدم لصفحة تسجيل أو فتح Modal
-        alert("تواصل مع الأدمن لتسجيل اسمك في النظام.");
+    async function registerPlayer() {
+        const rawName = document.getElementById('username').value;
+        const name = normalizeName(rawName);
+        const ageValue = document.getElementById('age').value;
+
+        if (!name) {
+            alert("يرجى إدخال الاسم الثلاثي");
+            return;
+        }
+
+        if (!ageValue) {
+            alert("يرجى إدخال العمر للتسجيل أول مرة");
+            return;
+        }
+
+        const age = parseInt(ageValue, 10);
+
+        if (isNaN(age) || age <= 0) {
+            alert("يرجى إدخال عمر صحيح");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/users/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fullName: name,
+                    age: age
+                })
+            });
+
+            const text = await res.text();
+
+            if (!res.ok) {
+                alert(text || "حدث خطأ في التسجيل");
+                return;
+            }
+
+            alert("تم تسجيل اللاعب بنجاح، يمكنك الدخول الآن");
+            document.getElementById('age').value = "";
+        } catch (e) {
+            alert("حدث خطأ أثناء التسجيل");
+            console.error(e);
+        }
     }
 </script>
 </body>
