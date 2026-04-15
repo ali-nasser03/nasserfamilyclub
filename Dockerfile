@@ -1,9 +1,9 @@
-# المرحلة الأولى: بناء المشروع
+# المرحلة الأولى: بناء المشروع باستخدام Maven
 FROM maven:3.8.5-openjdk-17 AS build
 COPY . .
 RUN mvn clean package -DskipTests
 
-# المرحلة الثانية: التشغيل
+# المرحلة الثانية: تشغيل التطبيق باستخدام Java 17
 FROM eclipse-temurin:17-jdk-jammy
 COPY --from=build /target/*.jar app.jar
 EXPOSE 8080
