@@ -19,7 +19,9 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> registerPlayer(@RequestBody User user) {
         try {
-            String fullName = user.getFullName() != null ? user.getFullName().trim().replaceAll("\\s+", " ") : "";
+            String fullName = user.getFullName() != null
+                    ? user.getFullName().trim().replaceAll("\\s+", " ")
+                    : "";
 
             if (fullName.isEmpty()) {
                 return ResponseEntity.badRequest().body("الاسم مطلوب");
@@ -34,8 +36,6 @@ public class UserController {
             newUser.setUsername(fullName);
             newUser.setAge(user.getAge());
             newUser.setRole("PLAYER");
-
-            // مهم لتفادي مشاكل الجداول القديمة إذا كان password مطلوبًا
             newUser.setPassword("");
 
             User saved = userRepository.save(newUser);
