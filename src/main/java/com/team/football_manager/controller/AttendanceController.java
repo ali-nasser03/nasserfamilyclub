@@ -17,11 +17,15 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/attendance")
 public class AttendanceController {
 
-    @Autowired private AttendanceRepository attendanceRepository;
-    @Autowired private UserRepository userRepository;
-    @Autowired private MatchRepository matchRepository;
+    @Autowired
+    private AttendanceRepository attendanceRepository;
 
-    // جلب القائمة مع ترتيب الحالات (حاضر، معتذر، لم يصوت)
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private MatchRepository matchRepository;
+
     @GetMapping("/active-list")
     public List<Map<String, Object>> getActiveAttendance() {
         List<User> allUsers = userRepository.findAll();
@@ -35,13 +39,16 @@ public class AttendanceController {
 
             if (currentMatch != null) {
                 Attendance att = attendanceRepository.findAll().stream()
-                        .filter(a -> a.getMatch().getId().equals(currentMatch.getId()) &&
-                                a.getPlayer().getId().equals(user.getId()))
-                        .findFirst().orElse(null);
+                        .filter(a -> a.getMatch() != null
+                                && a.getPlayer() != null
+                                && a.getMatch().getId().equals(currentMatch.getId())
+                                && a.getPlayer().getId().equals(user.getId()))
+                        .findFirst()
+                        .orElse(null);
 
                 if (att == null || att.getStatus() == null || att.getStatus().isEmpty()) {
                     map.put("status", "لم يصوت");
-                    map.put("paid", att != null && att.isPaid()); // الاحتفاظ بحالة الدفع حتى لو لم يصوت
+                    map.put("paid", att != null && att.isPaid());
                 } else {
                     map.put("status", "YES".equals(att.getStatus()) ? "✅ سأحضر" : "❌ معتذر");
                     map.put("paid", att.isPaid());
@@ -50,25 +57,26 @@ public class AttendanceController {
                 map.put("status", "لا توجد مباراة");
                 map.put("paid", false);
             }
+
             return map;
         }).collect(Collectors.toList());
     }
 
-    // ⭐ الدالة الجديدة: تصفير الحضور للمباراة الحالية (تُستدعى عند نشر مباراة جديدة)
     @PostMapping("/reset-all-votes")
     public ResponseEntity<String> resetAllVotes() {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        if (activeMatches.isEmpty()) return ResponseEntity.ok("No active match to reset");
+        if (activeMatches.isEmpty()) {
+            return ResponseEntity.ok("No active match to reset");
+        }
 
         Match currentMatch = activeMatches.get(0);
         List<Attendance> currentAttendance = attendanceRepository.findByMatchId(currentMatch.getId());
 
-        // نمسح حالات الحضور فقط ونبقي على سجل الدفع إذا أردت
         for (Attendance att : currentAttendance) {
-            att.setStatus(null); // تصفير التصويت
+            att.setStatus(null);
         }
-        attendanceRepository.saveAll(currentAttendance);
 
+        attendanceRepository.saveAll(currentAttendance);
         return ResponseEntity.ok("Success: Attendance Reset");
     }
 
@@ -80,58 +88,98 @@ public class AttendanceController {
         User player = userRepository.findByFullName(playerName).orElse(null);
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
 
-        if (player == null || activeMatches.isEmpty()) return "Error: No Active Match";
+        if (player == null || activeMatches.isEmpty()) {
+            return "Error: No Active Match";
+        }
 
         Match currentMatch = activeMatches.get(0);
+
         Attendance attendance = attendanceRepository.findAll().stream()
-                .filter(a -> a.getPlayer().getId().equals(player.getId()) &&
-                        a.getMatch().getId().equals(currentMatch.getId()))
-                .findFirst().orElse(new Attendance());
+                .filter(a -> a.getPlayer() != null
+                        && a.getMatch() != null
+                        && a.getPlayer().getId().equals(player.getId())
+                        && a.getMatch().getId().equals(currentMatch.getId()))
+                .findFirst()
+                .orElse(new Attendance());
 
         attendance.setPlayer(player);
         attendance.setMatch(currentMatch);
         attendance.setStatus(status);
         attendanceRepository.save(attendance);
+
         return "Success";
+    }
+
+    @PostMapping("/remove")
+    public String removeVote(@RequestBody Map<String, String> data) {
+        String playerName = data.get("playerName");
+
+        User player = userRepository.findByFullName(playerName).orElse(null);
+        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
+
+        if (player == null || activeMatches.isEmpty()) {
+            return "Error: No Active Match";
+        }
+
+        Match currentMatch = activeMatches.get(0);
+
+        Attendance attendance = attendanceRepository.findAll().stream()
+                .filter(a -> a.getPlayer() != null
+                        && a.getMatch() != null
+                        && a.getPlayer().getId().equals(player.getId())
+                        && a.getMatch().getId().equals(currentMatch.getId()))
+                .findFirst()
+                .orElse(null);
+
+        if (attendance == null) {
+            return "No Vote Found";
+        }
+
+        attendance.setStatus(null);
+        attendanceRepository.save(attendance);
+
+        return "Vote Removed";
     }
 
     @PostMapping("/toggle-payment/{playerId}")
     public String togglePayment(@PathVariable Long playerId) {
         User player = userRepository.findById(playerId).orElse(null);
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        if (player == null || activeMatches.isEmpty()) return "Error";
+
+        if (player == null || activeMatches.isEmpty()) {
+            return "Error";
+        }
+
+        Match currentMatch = activeMatches.get(0);
 
         Attendance att = attendanceRepository.findAll().stream()
-                .filter(a -> a.getPlayer().getId().equals(playerId) &&
-                        a.getMatch().getId().equals(activeMatches.get(0).getId()))
-                .findFirst().orElse(new Attendance());
+                .filter(a -> a.getPlayer() != null
+                        && a.getMatch() != null
+                        && a.getPlayer().getId().equals(playerId)
+                        && a.getMatch().getId().equals(currentMatch.getId()))
+                .findFirst()
+                .orElse(new Attendance());
 
         if (att.getId() == null) {
             att.setPlayer(player);
-            att.setMatch(activeMatches.get(0));
+            att.setMatch(currentMatch);
         }
+
         att.setPaid(!att.isPaid());
         attendanceRepository.save(att);
+
         return "Updated";
     }
 
     @PostMapping("/reset-month")
     public String resetAllPayments() {
         List<Attendance> all = attendanceRepository.findAll();
-        for (Attendance a : all) { a.setPaid(false); }
+        for (Attendance a : all) {
+            a.setPaid(false);
+        }
         attendanceRepository.saveAll(all);
         return "Done";
     }
-    @PostMapping("/remove")
-public void removeVote(@RequestBody Map<String, String> body) {
-    String name = body.get("playerName");
-
-    Attendance att = attendanceRepository.findByPlayerName(name);
-    if (att != null) {
-        att.setStatus("WAIT");
-        attendanceRepository.save(att);
-    }
-}
 
     @GetMapping("/history")
     public Map<String, List<String>> getMatchHistory() {
@@ -140,10 +188,13 @@ public void removeVote(@RequestBody Map<String, String> body) {
 
         for (Attendance att : all) {
             if ("YES".equals(att.getStatus())) {
-                String matchKey = att.getMatch().getLocation() + " (" + att.getMatch().getDateTime().toString().replace("T", " ") + ")";
-                history.computeIfAbsent(matchKey, k -> new ArrayList<>()).add(att.getPlayer().getFullName());
+                String matchKey = att.getMatch().getLocation()
+                        + " (" + att.getMatch().getDateTime().toString().replace("T", " ") + ")";
+                history.computeIfAbsent(matchKey, k -> new ArrayList<>())
+                        .add(att.getPlayer().getFullName());
             }
         }
+
         return history;
     }
 }
