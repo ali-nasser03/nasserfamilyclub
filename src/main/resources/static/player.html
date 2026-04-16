@@ -86,6 +86,14 @@
             background: #b83835;
         }
 
+        .btn-clear {
+            background: #f39c12;
+        }
+
+        .btn-clear:hover {
+            background: #d68910;
+        }
+
         .btn-logout {
             background: #4b5d6b;
         }
@@ -183,8 +191,8 @@
 
     <button class="btn btn-yes" onclick="vote('YES')">⚽ سأحضر</button>
     <button class="btn btn-no" onclick="vote('NO')">❌ أعتذر</button>
+    <button class="btn btn-clear" onclick="removeVote()">🧹 إلغاء التصويت</button>
     <button class="btn btn-logout" onclick="logout()">تسجيل الخروج</button>
-    <button class="btn btn-logout" onclick="removeVote()">🧹 إلغاء التصويت</button>
 </div>
 
 <div class="table-container">
@@ -265,24 +273,24 @@
             alert("حدث خطأ أثناء إرسال التصويت");
         }
     }
+
     async function removeVote() {
-    if (!confirm("هل تريد إلغاء تصويتك؟")) return;
+        if (!confirm("هل تريد إلغاء تصويتك؟")) return;
 
-    try {
-        await fetch('/api/attendance/remove', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                playerName: fullName
-            })
-        });
-
-        update();
-    } catch (e) {
-        console.error(e);
-        alert("حدث خطأ أثناء إلغاء التصويت");
+        try {
+            await fetch('/api/attendance/remove', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    playerName: fullName
+                })
+            });
+            update();
+        } catch (e) {
+            console.error(e);
+            alert("حدث خطأ أثناء إلغاء التصويت");
+        }
     }
-}
 
     function logout() {
         localStorage.removeItem('fullName');
