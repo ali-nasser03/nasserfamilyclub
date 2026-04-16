@@ -35,6 +35,7 @@
             background: #243544;
             scrollbar-width: none;
             scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tabs::-webkit-scrollbar {
@@ -90,12 +91,12 @@
             margin: 0 auto;
         }
 
-        h2, h3 {
+        h2 {
             margin-top: 0;
             text-align: center;
         }
 
-        input, button, textarea {
+        input, button {
             width: 100%;
             padding: 12px;
             border-radius: 12px;
@@ -128,18 +129,6 @@
             background: #cf711d;
         }
 
-        .danger-btn {
-            border: none;
-            background: #d64541;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .danger-btn:hover {
-            background: #bc3835;
-        }
-
         .section-header {
             background: #eef3f7;
             color: #2c3e50;
@@ -163,22 +152,6 @@
 
         .row:last-child {
             border-bottom: none;
-        }
-
-        .mini-btn {
-            width: auto;
-            margin: 0;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 10px;
-            background: #34495e;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .mini-btn:hover {
-            background: #2c3d4f;
         }
 
         .empty {
@@ -206,7 +179,7 @@
                 padding: 9px 14px;
             }
 
-            input, button, textarea {
+            input, button {
                 font-size: 15px;
             }
 
@@ -228,7 +201,6 @@
 </div>
 
 <div class="slider" id="slider">
-    <!-- صفحة المباراة -->
     <section class="page">
         <div class="card">
             <h2>🗓️ مباراة جديدة</h2>
@@ -238,7 +210,6 @@
         </div>
     </section>
 
-    <!-- صفحة التصويت -->
     <section class="page">
         <div class="card">
             <h2>🗳️ قائمة التصويت</h2>
@@ -246,7 +217,6 @@
         </div>
     </section>
 
-    <!-- صفحة الدفع -->
     <section class="page">
         <div class="card">
             <h2>💰 الدفع</h2>
@@ -255,7 +225,6 @@
         </div>
     </section>
 
-    <!-- صفحة السجل -->
     <section class="page">
         <div class="card">
             <h2>📜 سجل المباريات</h2>
@@ -267,50 +236,40 @@
 <script>
     const slider = document.getElementById('slider');
     const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabs = document.getElementById('tabs');
-
-    function centerActiveTab(index) {
-        const activeBtn = tabButtons[index];
-        if (!activeBtn) return;
-
-        const tabsRect = tabs.getBoundingClientRect();
-        const btnRect = activeBtn.getBoundingClientRect();
-
-        const currentScroll = tabs.scrollLeft;
-        const targetScroll =
-            currentScroll + (btnRect.left - tabsRect.left) - (tabs.clientWidth / 2) + (activeBtn.clientWidth / 2);
-
-        tabs.scrollTo({
-            left: targetScroll,
-            behavior: 'smooth'
-        });
-    }
 
     function setActiveTab(index) {
         tabButtons.forEach((btn, i) => {
             btn.classList.toggle('active', i === index);
         });
 
-        centerActiveTab(index);
+        const activeBtn = tabButtons[index];
+        if (activeBtn) {
+            activeBtn.scrollIntoView({
+                behavior: 'smooth',
+                inline: 'center',
+                block: 'nearest'
+            });
+        }
     }
 
     function goToPage(index) {
         const pageWidth = slider.clientWidth;
-
         slider.scrollTo({
             left: pageWidth * index,
             behavior: 'smooth'
         });
-
         setActiveTab(index);
     }
 
+    let scrollTimer;
     slider.addEventListener('scroll', () => {
-        const pageWidth = slider.clientWidth;
-        if (!pageWidth) return;
-
-        const index = Math.round(slider.scrollLeft / pageWidth);
-        setActiveTab(index);
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+            const pageWidth = slider.clientWidth;
+            if (!pageWidth) return;
+            const index = Math.round(slider.scrollLeft / pageWidth);
+            setActiveTab(index);
+        }, 60);
     });
 
     async function load() {
