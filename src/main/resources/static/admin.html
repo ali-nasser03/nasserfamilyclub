@@ -1,255 +1,454 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>صفحة الأدمن</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الأدمن</title>
 
-<style>
-* {
-    box-sizing: border-box;
-}
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-body {
-    margin: 0;
-    font-family: sans-serif;
-    background: #2c3e50;
-    color: white;
-    overflow: hidden;
-}
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2c3e50;
+            color: white;
+            overflow: hidden;
+        }
 
-/* العنوان */
-.header {
-    text-align: center;
-    padding: 12px;
-    background: #1a252f;
-    font-size: 18px;
-    font-weight: bold;
-}
+        .header {
+            text-align: center;
+            padding: 14px 12px;
+            background: #1f2d3a;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
 
-/* شريط التنقل مثل الستوري */
-.nav {
-    display: flex;
-    overflow-x: auto;
-    gap: 10px;
-    padding: 10px;
-    background: #22313f;
-}
+        .tabs {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 12px;
+            background: #243544;
+            scrollbar-width: none;
+        }
 
-.nav button {
-    flex: 0 0 auto;
-    padding: 8px 14px;
-    border-radius: 20px;
-    border: none;
-    background: #34495e;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-}
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
 
-.nav button.active {
-    background: #27ae60;
-}
+        .tab-btn {
+            flex: 0 0 auto;
+            border: none;
+            border-radius: 22px;
+            padding: 10px 16px;
+            background: #3a5063;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.25s;
+            white-space: nowrap;
+        }
 
-/* السلايدر */
-.slider {
-    display: flex;
-    height: calc(100vh - 100px);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-}
+        .tab-btn.active {
+            background: #27ae60;
+        }
 
-/* كل صفحة */
-.page {
-    min-width: 100%;
-    padding: 20px;
-    scroll-snap-align: start;
-    overflow-y: auto;
-}
+        .slider {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 118px);
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
 
-/* كروت */
-.card {
-    background: white;
-    color: #333;
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-}
+        .slider::-webkit-scrollbar {
+            display: none;
+        }
 
-/* أزرار */
-button.main-btn {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    background: #27ae60;
-    color: white;
-}
+        .page {
+            flex: 0 0 100%;
+            width: 100%;
+            scroll-snap-align: start;
+            overflow-y: auto;
+            padding: 18px;
+        }
 
-/* جدول */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+        .card {
+            background: rgba(255,255,255,0.96);
+            color: #2c3e50;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            max-width: 700px;
+            margin: 0 auto;
+        }
 
-td, th {
-    padding: 8px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-}
+        h2, h3 {
+            margin-top: 0;
+            text-align: center;
+        }
 
-</style>
+        input, button, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #d8d8d8;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .main-btn {
+            border: none;
+            background: #27ae60;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .main-btn:hover {
+            background: #219150;
+        }
+
+        .warning-btn {
+            border: none;
+            background: #e67e22;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .warning-btn:hover {
+            background: #cf711d;
+        }
+
+        .danger-btn {
+            border: none;
+            background: #d64541;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .danger-btn:hover {
+            background: #bc3835;
+        }
+
+        .section-header {
+            background: #eef3f7;
+            color: #2c3e50;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin: 14px 0 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 10px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .row:last-child {
+            border-bottom: none;
+        }
+
+        .mini-btn {
+            width: auto;
+            margin: 0;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            background: #34495e;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .mini-btn:hover {
+            background: #2c3d4f;
+        }
+
+        .empty {
+            text-align: center;
+            color: #666;
+            padding: 14px 0;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                font-size: 18px;
+            }
+
+            .page {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 14px;
+                border-radius: 14px;
+            }
+
+            .tab-btn {
+                font-size: 14px;
+                padding: 9px 14px;
+            }
+
+            input, button, textarea {
+                font-size: 15px;
+            }
+
+            .row {
+                padding: 10px 6px;
+            }
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="header">لوحة تحكم الأدمن</div>
 
-<div class="nav">
-    <button onclick="goTo(0)" class="active">المباراة</button>
-    <button onclick="goTo(1)">الحضور</button>
-    <button onclick="goTo(2)">الدفع</button>
-    <button onclick="goTo(3)">السجل</button>
+<div class="tabs" id="tabs">
+    <button class="tab-btn active" onclick="goToPage(0)">مباراة جديدة</button>
+    <button class="tab-btn" onclick="goToPage(1)">قائمة التصويت</button>
+    <button class="tab-btn" onclick="goToPage(2)">الدفع</button>
+    <button class="tab-btn" onclick="goToPage(3)">السجل</button>
 </div>
 
 <div class="slider" id="slider">
-
-    <!-- الصفحة 1 -->
-    <div class="page">
+    <!-- صفحة المباراة -->
+    <section class="page">
         <div class="card">
-            <h3>إضافة مباراة</h3>
-            <input type="text" id="location" placeholder="المكان" style="width:100%; padding:10px;">
-            <input type="datetime-local" id="dateTime" style="width:100%; padding:10px; margin-top:10px;">
-            <button class="main-btn" onclick="addMatch()">نشر المباراة</button>
+            <h2>🗓️ مباراة جديدة</h2>
+            <input type="text" id="loc" placeholder="المكان">
+            <input type="datetime-local" id="dt">
+            <button class="main-btn" onclick="createNewMatch()">نشر المباراة</button>
         </div>
-    </div>
+    </section>
 
-    <!-- الصفحة 2 -->
-    <div class="page">
+    <!-- صفحة التصويت -->
+    <section class="page">
         <div class="card">
-            <h3>قائمة الحضور</h3>
-            <table>
-                <tbody id="attendanceList"></tbody>
-            </table>
+            <h2>🗳️ قائمة التصويت</h2>
+            <div id="voteList"></div>
         </div>
-    </div>
+    </section>
 
-    <!-- الصفحة 3 -->
-    <div class="page">
+    <!-- صفحة الدفع -->
+    <section class="page">
         <div class="card">
-            <h3>إدارة الدفع</h3>
-            <table>
-                <tbody id="paymentList"></tbody>
-            </table>
+            <h2>💰 الدفع</h2>
+            <div id="payList"></div>
+            <button class="warning-btn" onclick="resetMonth()">تصفير الدفع للجميع</button>
         </div>
-    </div>
+    </section>
 
-    <!-- الصفحة 4 -->
-    <div class="page">
+    <!-- صفحة السجل -->
+    <section class="page">
         <div class="card">
-            <h3>سجل المباريات</h3>
-            <div id="history"></div>
+            <h2>📜 سجل المباريات</h2>
+            <div id="historyList"></div>
         </div>
-    </div>
-
+    </section>
 </div>
 
 <script>
+    const slider = document.getElementById('slider');
+    const tabButtons = document.querySelectorAll('.tab-btn');
 
-const slider = document.getElementById("slider");
-const navButtons = document.querySelectorAll(".nav button");
-
-/* التنقل */
-function goTo(index) {
-    slider.scrollTo({
-        left: index * window.innerWidth,
-        behavior: "smooth"
-    });
-
-    navButtons.forEach(b => b.classList.remove("active"));
-    navButtons[index].classList.add("active");
-}
-
-/* تغيير active عند السحب */
-slider.addEventListener("scroll", () => {
-    const index = Math.round(slider.scrollLeft / window.innerWidth);
-    navButtons.forEach(b => b.classList.remove("active"));
-    if (navButtons[index]) navButtons[index].classList.add("active");
-});
-
-/* API */
-
-async function addMatch() {
-    const location = document.getElementById("location").value;
-    const dateTime = document.getElementById("dateTime").value;
-
-    await fetch("/api/matches/add", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({location, dateTime})
-    });
-
-    alert("تم نشر المباراة");
-}
-
-async function loadAttendance() {
-    const res = await fetch("/api/attendance/active-list");
-    const data = await res.json();
-
-    let html = "";
-    data.forEach(p => {
-        html += `<tr>
-            <td>${p.name}</td>
-            <td>${p.status}</td>
-        </tr>`;
-    });
-
-    document.getElementById("attendanceList").innerHTML = html;
-}
-
-async function loadPayments() {
-    const res = await fetch("/api/attendance/active-list");
-    const data = await res.json();
-
-    let html = "";
-    data.forEach(p => {
-        html += `<tr>
-            <td>${p.name}</td>
-            <td>${p.paid ? "✅" : "❌"}</td>
-            <td><button onclick="toggle(${p.id})">تغيير</button></td>
-        </tr>`;
-    });
-
-    document.getElementById("paymentList").innerHTML = html;
-}
-
-async function toggle(id) {
-    await fetch(`/api/attendance/toggle-payment/${id}`, {method:"POST"});
-    loadPayments();
-}
-
-async function loadHistory() {
-    const res = await fetch("/api/attendance/history");
-    const data = await res.json();
-
-    let html = "";
-    for (let match in data) {
-        html += `<p><b>${match}</b><br>${data[match].join(", ")}</p>`;
+    function setActiveTab(index) {
+        tabButtons.forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
     }
 
-    document.getElementById("history").innerHTML = html;
-}
+    function goToPage(index) {
+        const pageWidth = slider.clientWidth;
+        slider.scrollTo({
+            left: pageWidth * index,
+            behavior: 'smooth'
+        });
+        setActiveTab(index);
+    }
 
-/* تحميل البيانات */
-window.onload = () => {
-    loadAttendance();
-    loadPayments();
-    loadHistory();
-};
+    slider.addEventListener('scroll', () => {
+        const pageWidth = slider.clientWidth;
+        if (!pageWidth) return;
+        const index = Math.round(slider.scrollLeft / pageWidth);
+        setActiveTab(index);
+    });
 
+    async function load() {
+        try {
+            const res = await fetch('/api/attendance/active-list');
+            const data = await res.json();
+
+            // التصويت
+            const yes = data.filter(p => p.status.includes('✅'));
+            const no = data.filter(p => p.status.includes('❌'));
+            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+
+            let voteHtml = '';
+
+            if (yes.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⚽ حاضرون</span>
+                        <span>(${yes.length})</span>
+                    </div>
+                `;
+                voteHtml += yes.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:green;font-weight:bold;">✅</span>
+                    </div>
+                `).join('');
+            }
+
+            if (no.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>❌ معتذرون</span>
+                        <span>(${no.length})</span>
+                    </div>
+                `;
+                voteHtml += no.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:red;font-weight:bold;">❌</span>
+                    </div>
+                `).join('');
+            }
+
+            if (wait.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⏳ لم يصوتوا</span>
+                        <span>(${wait.length})</span>
+                    </div>
+                `;
+                voteHtml += wait.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:gray;">لم يصوت</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('voteList').innerHTML =
+                voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
+
+            // الدفع
+            document.getElementById('payList').innerHTML = data.length
+                ? data.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <label style="display:flex;align-items:center;gap:8px;">
+                            <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
+                            <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
+                        </label>
+                    </div>
+                `).join('')
+                : `<div class="empty">لا يوجد لاعبين</div>`;
+
+            // السجل
+            await loadHistory();
+
+        } catch (e) {
+            console.error('Error loading data:', e);
+        }
+    }
+
+    async function loadHistory() {
+        try {
+            const res = await fetch('/api/attendance/history');
+            const data = await res.json();
+
+            const keys = Object.keys(data);
+
+            if (!keys.length) {
+                document.getElementById('historyList').innerHTML = `<div class="empty">لا يوجد سجل بعد</div>`;
+                return;
+            }
+
+            let html = '';
+            keys.forEach(matchKey => {
+                html += `
+                    <div class="section-header">
+                        <span>${matchKey}</span>
+                        <span>(${data[matchKey].length})</span>
+                    </div>
+                `;
+                html += data[matchKey].map(name => `
+                    <div class="row">
+                        <span>${name}</span>
+                        <span style="color:green;font-weight:bold;">✅</span>
+                    </div>
+                `).join('');
+            });
+
+            document.getElementById('historyList').innerHTML = html;
+        } catch (e) {
+            console.error('Error loading history:', e);
+            document.getElementById('historyList').innerHTML = `<div class="empty">تعذر تحميل السجل</div>`;
+        }
+    }
+
+    async function createNewMatch() {
+        const location = document.getElementById('loc').value;
+        const dateTime = document.getElementById('dt').value;
+
+        if (!location || !dateTime) {
+            alert('عبئ المكان والوقت أولاً');
+            return;
+        }
+
+        if (confirm('تصفير القائمة ونشر المباراة الجديدة؟')) {
+            await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+
+            const res = await fetch('/api/matches/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ location, dateTime, active: true })
+            });
+
+            if (res.ok) {
+                alert('تم نشر المباراة وتجهيز القائمة ⚽');
+                document.getElementById('loc').value = '';
+                document.getElementById('dt').value = '';
+                load();
+                goToPage(1);
+            } else {
+                alert('حدث خطأ أثناء نشر المباراة');
+            }
+        }
+    }
+
+    async function toggle(id) {
+        await fetch(`/api/attendance/toggle-payment/${id}`, { method: 'POST' });
+        load();
+    }
+
+    async function resetMonth() {
+        if (confirm('هل تريد تصفير الدفع للجميع؟')) {
+            await fetch('/api/attendance/reset-month', { method: 'POST' });
+            alert('تم تصفير الدفع');
+            load();
+        }
+    }
+
+    window.onload = load;
 </script>
 
 </body>
