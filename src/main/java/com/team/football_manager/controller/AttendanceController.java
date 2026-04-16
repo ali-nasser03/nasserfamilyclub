@@ -122,6 +122,16 @@ public class AttendanceController {
         attendanceRepository.saveAll(all);
         return "Done";
     }
+    @PostMapping("/remove")
+public void removeVote(@RequestBody Map<String, String> body) {
+    String name = body.get("playerName");
+
+    Attendance att = attendanceRepository.findByPlayerName(name);
+    if (att != null) {
+        att.setStatus("WAIT");
+        attendanceRepository.save(att);
+    }
+}
 
     @GetMapping("/history")
     public Map<String, List<String>> getMatchHistory() {
