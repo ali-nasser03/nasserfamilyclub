@@ -27,42 +27,18 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
-        .tabs {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 12px;
+        .swipe-hint {
+            text-align: center;
+            padding: 8px 12px;
             background: #243544;
-            scrollbar-width: none;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .tab-btn {
-            flex: 0 0 auto;
-            border: none;
-            border-radius: 22px;
-            padding: 10px 16px;
-            background: #3a5063;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.25s;
-            white-space: nowrap;
-        }
-
-        .tab-btn.active {
-            background: #27ae60;
+            font-size: 14px;
+            color: #dfe6ec;
         }
 
         .slider {
             display: flex;
             width: 100%;
-            height: calc(100vh - 118px);
+            height: calc(100vh - 86px);
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             scroll-behavior: smooth;
@@ -160,6 +136,26 @@
             padding: 14px 0;
         }
 
+        .page-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #b8c4cc;
+            transition: 0.25s;
+        }
+
+        .dot.active {
+            background: #27ae60;
+            transform: scale(1.15);
+        }
+
         @media (max-width: 600px) {
             .header {
                 font-size: 18px;
@@ -172,11 +168,6 @@
             .card {
                 padding: 14px;
                 border-radius: 14px;
-            }
-
-            .tab-btn {
-                font-size: 14px;
-                padding: 9px 14px;
             }
 
             input, button {
@@ -192,85 +183,75 @@
 <body>
 
 <div class="header">لوحة تحكم الأدمن</div>
-
-<div class="tabs" id="tabs">
-    <button class="tab-btn active" onclick="goToPage(0)">مباراة جديدة</button>
-    <button class="tab-btn" onclick="goToPage(1)">قائمة التصويت</button>
-    <button class="tab-btn" onclick="goToPage(2)">الدفع</button>
-    <button class="tab-btn" onclick="goToPage(3)">السجل</button>
-</div>
+<div class="swipe-hint">اسحب يمين أو يسار للتنقل بين الصفحات</div>
 
 <div class="slider" id="slider">
+    <!-- صفحة المباراة -->
     <section class="page">
         <div class="card">
             <h2>🗓️ مباراة جديدة</h2>
             <input type="text" id="loc" placeholder="المكان">
             <input type="datetime-local" id="dt">
             <button class="main-btn" onclick="createNewMatch()">نشر المباراة</button>
+
+            <div class="page-indicator">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
         </div>
     </section>
 
+    <!-- صفحة التصويت -->
     <section class="page">
         <div class="card">
             <h2>🗳️ قائمة التصويت</h2>
             <div id="voteList"></div>
+
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
         </div>
     </section>
 
+    <!-- صفحة الدفع -->
     <section class="page">
         <div class="card">
             <h2>💰 الدفع</h2>
             <div id="payList"></div>
             <button class="warning-btn" onclick="resetMonth()">تصفير الدفع للجميع</button>
+
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot active"></span>
+                <span class="dot"></span>
+            </div>
         </div>
     </section>
 
+    <!-- صفحة السجل -->
     <section class="page">
         <div class="card">
             <h2>📜 سجل المباريات</h2>
             <div id="historyList"></div>
+
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot active"></span>
+            </div>
         </div>
     </section>
 </div>
 
 <script>
     const slider = document.getElementById('slider');
-    const tabButtons = document.querySelectorAll('.tab-btn');
-
-    function setActiveTab(index) {
-        tabButtons.forEach((btn, i) => {
-            btn.classList.toggle('active', i === index);
-        });
-
-        const activeBtn = tabButtons[index];
-        if (activeBtn) {
-            activeBtn.scrollIntoView({
-                behavior: 'smooth',
-                inline: 'center',
-                block: 'nearest'
-            });
-        }
-    }
-
-    function goToPage(index) {
-        const pageWidth = slider.clientWidth;
-        slider.scrollTo({
-            left: pageWidth * index,
-            behavior: 'smooth'
-        });
-        setActiveTab(index);
-    }
-
-    let scrollTimer;
-    slider.addEventListener('scroll', () => {
-        clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(() => {
-            const pageWidth = slider.clientWidth;
-            if (!pageWidth) return;
-            const index = Math.round(slider.scrollLeft / pageWidth);
-            setActiveTab(index);
-        }, 60);
-    });
 
     async function load() {
         try {
@@ -408,7 +389,11 @@
                 document.getElementById('loc').value = '';
                 document.getElementById('dt').value = '';
                 load();
-                goToPage(1);
+
+                slider.scrollTo({
+                    left: slider.clientWidth,
+                    behavior: 'smooth'
+                });
             } else {
                 alert('حدث خطأ أثناء نشر المباراة');
             }
@@ -428,10 +413,7 @@
         }
     }
 
-    window.onload = () => {
-        load();
-        setActiveTab(0);
-    };
+    window.onload = load;
 </script>
 
 </body>
