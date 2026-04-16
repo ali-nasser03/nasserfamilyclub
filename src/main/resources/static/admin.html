@@ -266,25 +266,48 @@
 <script>
     const slider = document.getElementById('slider');
     const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabs = document.getElementById('tabs');
+
+    function centerActiveTab(index) {
+        const activeBtn = tabButtons[index];
+        if (!activeBtn) return;
+
+        const tabsRect = tabs.getBoundingClientRect();
+        const btnRect = activeBtn.getBoundingClientRect();
+
+        const currentScroll = tabs.scrollLeft;
+        const targetScroll =
+            currentScroll + (btnRect.left - tabsRect.left) - (tabs.clientWidth / 2) + (activeBtn.clientWidth / 2);
+
+        tabs.scrollTo({
+            left: targetScroll,
+            behavior: 'smooth'
+        });
+    }
 
     function setActiveTab(index) {
         tabButtons.forEach((btn, i) => {
             btn.classList.toggle('active', i === index);
         });
+
+        centerActiveTab(index);
     }
 
     function goToPage(index) {
         const pageWidth = slider.clientWidth;
+
         slider.scrollTo({
             left: pageWidth * index,
             behavior: 'smooth'
         });
+
         setActiveTab(index);
     }
 
     slider.addEventListener('scroll', () => {
         const pageWidth = slider.clientWidth;
         if (!pageWidth) return;
+
         const index = Math.round(slider.scrollLeft / pageWidth);
         setActiveTab(index);
     });
@@ -294,7 +317,6 @@
             const res = await fetch('/api/attendance/active-list');
             const data = await res.json();
 
-            // التصويت
             const yes = data.filter(p => p.status.includes('✅'));
             const no = data.filter(p => p.status.includes('❌'));
             const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
@@ -349,7 +371,6 @@
             document.getElementById('voteList').innerHTML =
                 voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-            // الدفع
             document.getElementById('payList').innerHTML = data.length
                 ? data.map(p => `
                     <div class="row">
@@ -362,7 +383,6 @@
                 `).join('')
                 : `<div class="empty">لا يوجد لاعبين</div>`;
 
-            // السجل
             await loadHistory();
 
         } catch (e) {
@@ -448,7 +468,10 @@
         }
     }
 
-    window.onload = load;
+    window.onload = () => {
+        load();
+        setActiveTab(0);
+    };
 </script>
 
 </body>
