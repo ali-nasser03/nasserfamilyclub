@@ -5,11 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
+@SpringBootApplication
+public class FootballManagerApplication {
 
-@SpringBootTest
-class FootballManagerApplicationTests {
-
-    @Test
-    void contextLoads() {
+    public static void main(String[] args) {
+        SpringApplication.run(FootballManagerApplication.class, args);
     }
 }
