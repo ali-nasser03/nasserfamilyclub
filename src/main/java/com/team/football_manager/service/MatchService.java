@@ -21,7 +21,7 @@ public class MatchService {
     private AttendanceRepository attendanceRepository;
 
     public Match createMatch(Match match) {
-        // قبل إنشاء مباراة جديدة، اغلق أي مباراة مفعلة قديمة
+        // إغلاق أي مباراة نشطة قديمة
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
         for (Match m : activeMatches) {
             m.setActive(false);
@@ -36,7 +36,15 @@ public class MatchService {
         return matchRepository.findAll();
     }
 
-    // كل دقيقة افحص إذا المباراة انتهى وقتها
+    public Match getLatestActiveMatch() {
+        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
+        if (activeMatches.isEmpty()) {
+            return null;
+        }
+        return activeMatches.get(0);
+    }
+
+    // كل دقيقة نفحص إذا المباراة انتهى وقتها
     @Scheduled(fixedRate = 60000)
     public void deactivateExpiredMatches() {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
@@ -48,7 +56,7 @@ public class MatchService {
                 match.setActive(false);
                 matchRepository.save(match);
 
-                // 2) تصفير التصويتات الخاصة بها
+                // 2) تصفير التصويت فقط - بدون المساس بالدفع
                 List<Attendance> attendanceList = attendanceRepository.findByMatchId(match.getId());
                 for (Attendance attendance : attendanceList) {
                     attendance.setStatus(null);
