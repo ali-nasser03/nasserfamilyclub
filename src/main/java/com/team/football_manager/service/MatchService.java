@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -19,6 +20,8 @@ public class MatchService {
 
     @Autowired
     private AttendanceRepository attendanceRepository;
+
+    private static final ZoneId PALESTINE_ZONE = ZoneId.of("Asia/Jerusalem");
 
     public Match createMatch(Match match) {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
@@ -45,13 +48,16 @@ public class MatchService {
 
     @Scheduled(fixedRate = 10000)
     public void deactivateExpiredMatches() {
-        
+        LocalDateTime now = LocalDateTime.now(PALESTINE_ZONE);
+
         System.out.println("🔥 SCHEDULER RUNNING...");
-        
+        System.out.println("🕒 Palestine time now: " + now);
+
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        LocalDateTime now = LocalDateTime.now();
 
         for (Match match : activeMatches) {
+            System.out.println("📌 Checking match: " + match.getLocation() + " at " + match.getDateTime());
+
             if (match.getDateTime() != null && !match.getDateTime().isAfter(now)) {
                 match.setActive(false);
                 matchRepository.save(match);
