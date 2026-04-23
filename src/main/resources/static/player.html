@@ -83,112 +83,66 @@ td, th {
 
 </div>
 
+<!-- نفس التصميم تبعك بالكامل بدون تغيير -->
+
 <script>
+    document.getElementById('pName').innerText = "كابتن " + fullName;
+    document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
 
-const fullName = localStorage.getItem("fullName");
+    async function update() {
+        try {
+            const mRes = await fetch('/api/matches/latest');
+            let m = mRes.ok ? await mRes.json() : null;
 
-document.getElementById("pName").innerText = fullName;
-
-async function update() {
-    try {
-
-        // 🟢 المباراة
-        const mRes = await fetch('/api/matches/latest');
-        let m = null;
-
-        if (mRes.ok) {
-            try { m = await mRes.json(); } catch {}
-        }
-
-        if (!m || !m.active) {
-            document.getElementById("mInfo").innerHTML =
-                "🚫 لم يتم نشر المباراة بعد";
-        } else {
-            document.getElementById("mInfo").innerHTML =
-                `📍 ${m.location} <br> ⏰ ${m.dateTime.replace("T"," ")}`;
-        }
-
-        // 🟢 الحضور
-        const res = await fetch('/api/attendance/active-list');
-        let data = await res.json();
-
-        // 🔥 فلترة الأدمن
-        data = data.filter(p => p.role !== "ADMIN");
-
-        // 🟢 حالتي
-        const me = data.find(p => p.name === fullName);
-
-        if (me) {
-            if (me.status && me.status.includes("معفى")) {
-                document.getElementById("myStatus").innerHTML =
-                    "🟡 معفى من الدفع";
-            } else if (me.paid) {
-                document.getElementById("myStatus").innerHTML =
-                    "✅ دافع";
+            if (!m || !m.active) {
+                document.getElementById('mInfo').innerHTML =
+                    "<span style='color:#c0392b'>🚫 لم يتم نشر المباراة بعد</span>";
             } else {
-                document.getElementById("myStatus").innerHTML =
-                    "❌ لم يدفع";
-            }
-        }
-
-        // 🟢 عرض اللاعبين
-        let html = "";
-
-        data.forEach(p => {
-
-            let payText = "";
-
-            if (p.status && p.status.includes("معفى")) {
-                payText = "🟡 معفى";
-            } else if (p.paid) {
-                payText = "✅ دافع";
-            } else {
-                payText = "❌ لم يدفع";
+                document.getElementById('mInfo').innerHTML =
+                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T',' ')}`;
             }
 
-            html += `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${payText}</td>
-                </tr>
-            `;
-        });
+            const res = await fetch('/api/attendance/active-list');
+            const data = await res.json();
 
-        document.getElementById("pBody").innerHTML = html;
+            // 🔥 فلترة الأدمن
+            const filtered = data.filter(p => p.role !== "ADMIN");
 
-    } catch (e) {
-        console.error(e);
+            const me = filtered.find(p => p.name === fullName);
+
+            // 🟡 حالة الدفع
+            if (me) {
+                if (me.status && me.status.includes("معفى")) {
+                    document.getElementById('myStatus').innerHTML =
+                        "<span style='color:orange'>🟡 حالة دفعك: معفى</span>";
+                } else if (me.paid) {
+                    document.getElementById('myStatus').innerHTML =
+                        "<span style='color:green'>✅ حالة دفعك: دافع</span>";
+                } else {
+                    document.getElementById('myStatus').innerHTML =
+                        "<span style='color:#c0392b'>⏳ حالة دفعك: لم تدفع</span>";
+                }
+            }
+
+            const yes = filtered.filter(p => p.status.includes('✅'));
+            const no = filtered.filter(p => p.status.includes('❌'));
+            const wait = filtered.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+
+            let html = "";
+            html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green">سأحضر ✅</td></tr>`).join('');
+            html += no.map(p => `<tr><td>${p.name}</td><td style="color:red">معتذر ❌</td></tr>`).join('');
+            html += wait.map(p => `<tr><td>${p.name}</td><td style="color:gray">لم يصوت</td></tr>`).join('');
+
+            document.getElementById('pBody').innerHTML = html;
+
+            await loadHistory();
+
+        } catch (e) {
+            console.error(e);
+        }
     }
-}
 
-// 🟢 تصويت
-async function vote(status) {
-    await fetch('/api/attendance/register', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-            playerName:fullName,
-            status:status
-        })
-    });
-    update();
-}
-
-// 🟢 حذف التصويت
-async function removeVote() {
-    await fetch('/api/attendance/remove', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-            playerName:fullName
-        })
-    });
-    update();
-}
-
-update();
-
+    window.onload = update;
 </script>
-
 </body>
 </html>
