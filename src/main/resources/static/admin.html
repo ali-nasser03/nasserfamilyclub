@@ -1,27 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صفحة الأدمن</title>
+
+<style>
+body {
+    margin:0;
+    font-family:Arial;
+    background:#2c3e50;
+    color:white;
+    overflow:hidden;
+}
+
+.slider {
+    display:flex;
+    width:100%;
+    height:100vh;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+}
+
+.page {
+    flex:0 0 100%;
+    padding:15px;
+    scroll-snap-align:start;
+}
+
+.card {
+    background:white;
+    color:#333;
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+}
+
+h2,h3 {
+    text-align:center;
+}
+
+button {
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.reset {background:#e67e22; color:white;}
+
+.row {
+    display:flex;
+    justify-content:space-between;
+    padding:10px;
+    border-bottom:1px solid #eee;
+}
+
+.green {color:green;}
+.red {color:red;}
+.orange {color:orange;}
+.gray {color:gray;}
+</style>
+</head>
+
+<body>
+
+<div class="slider">
+
+<!-- 🟢 الصفحة 1 -->
+<div class="page">
+    <div class="card">
+        <h2>📊 الحضور</h2>
+        <div id="playersList"></div>
+
+        <button class="reset" onclick="resetAttendance()">🧹 تصفير الحضور</button>
+    </div>
+</div>
+
+<!-- 🟢 الصفحة 2 -->
+<div class="page">
+    <div class="card">
+        <h2>📜 السجل</h2>
+        <div id="history"></div>
+    </div>
+</div>
+
+</div>
+
 <script>
+
 async function loadPlayers() {
     try {
-        const res = await fetch('/api/users/players');
+        const res = await fetch('/api/attendance/active-list');
         let data = await res.json();
 
         // 🔥 فلترة الأدمن
         data = data.filter(p => p.role !== "ADMIN");
 
-        const container = document.getElementById("playersList");
-
         let html = "";
+
         data.forEach(p => {
+
+            // 🟢 الحالة
+            let status = "لم يصوت";
+            if (p.status === "✅") status = "<span class='green'>حاضر</span>";
+            else if (p.status === "❌") status = "<span class='red'>معتذر</span>";
+
+            // 🟢 الدفع
+            let pay = "";
+            if (p.status && p.status.includes("معفى")) {
+                pay = "<span class='orange'>معفى 🟡</span>";
+            } else if (p.paid) {
+                pay = "<span class='green'>دافع</span>";
+            } else {
+                pay = "<span class='red'>لم يدفع</span>";
+            }
+
             html += `
                 <div class="row">
-                    <span>${p.fullName}</span>
+                    <span>${p.name}</span>
+                    <span>${status} | ${pay}</span>
                 </div>
             `;
         });
 
-        container.innerHTML = html;
+        document.getElementById("playersList").innerHTML = html;
 
-    } catch (e) {
+    } catch(e) {
         console.error(e);
     }
 }
+
+async function loadHistory() {
+    try {
+        const res = await fetch('/api/attendance/history');
+        const data = await res.json();
+
+        let html = "";
+
+        for (let match in data) {
+            html += `<h3>${match}</h3>`;
+
+            data[match].forEach(name => {
+                html += `<div class="row"><span>${name}</span></div>`;
+            });
+        }
+
+        document.getElementById("history").innerHTML = html;
+
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+// 🟢 تصفير الحضور فقط
+async function resetAttendance() {
+    if (!confirm("هل أنت متأكد؟")) return;
+
+    await fetch('/api/attendance/reset', {
+        method:'POST'
+    });
+
+    loadPlayers();
+}
+
+// تحميل
+loadPlayers();
+loadHistory();
+
 </script>
+
+</body>
+</html>
