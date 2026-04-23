@@ -7,16 +7,21 @@ import lombok.Data;
 @Table(name = "app_users")
 @Data
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String username;
+
     private int age;
+
     private String password;
 
     @Column(name = "full_name")
     private String fullName;
 
     private String role; // ADMIN or PLAYER
+
+    private boolean working; // هل اللاعب يعمل أم لا
 }
