@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>غرفة العمليات</title>
+    <title>لوحة تحكم الأدمن</title>
 
     <style>
         * {
@@ -148,12 +148,11 @@
             height: 10px;
             border-radius: 50%;
             background: #b8c4cc;
-            transition: 0.25s;
         }
 
         .dot.active {
             background: #27ae60;
-            transform: scale(1.15);
+            transform: scale(1.12);
         }
 
         @media (max-width: 600px) {
@@ -182,14 +181,13 @@
 </head>
 <body>
 
-<div class="header">غرفة العمليات</div>
-<div class="swipe-hint"></div>
+<div class="header">لوحة تحكم الأدمن</div>
+<div class="swipe-hint">اسحب يمين أو يسار للتنقل بين الصفحات</div>
 
 <div class="slider" id="slider">
-    <!-- صفحة المباراة -->
     <section class="page">
         <div class="card">
-            <h2> مباراة جديدة 🗓️ </h2>
+            <h2>🗓️ مباراة جديدة</h2>
             <input type="text" id="loc" placeholder="المكان">
             <input type="datetime-local" id="dt">
             <button class="main-btn" onclick="createNewMatch()">نشر المباراة</button>
@@ -203,10 +201,9 @@
         </div>
     </section>
 
-    <!-- صفحة التصويت -->
     <section class="page">
         <div class="card">
-            <h2>قائمة التصويت 🗳️ </h2>
+            <h2>🗳️ قائمة التصويت</h2>
             <div id="voteList"></div>
 
             <div class="page-indicator">
@@ -218,10 +215,9 @@
         </div>
     </section>
 
-    <!-- صفحة الدفع -->
     <section class="page">
         <div class="card">
-            <h2> الدفع 💰 </h2>
+            <h2>💰 الدفع</h2>
             <div id="payList"></div>
             <button class="warning-btn" onclick="resetMonth()">تصفير الدفع للجميع</button>
 
@@ -234,10 +230,9 @@
         </div>
     </section>
 
-    <!-- صفحة السجل -->
     <section class="page">
         <div class="card">
-            <h2> سجل المباريات 📜 </h2>
+            <h2>📜 سجل المباريات</h2>
             <div id="historyList"></div>
 
             <div class="page-indicator">
@@ -375,7 +370,7 @@
             return;
         }
 
-        if (confirm('تصفير القائمة ونشر المباراة الجديدة؟')) {
+        if (confirm('تصفير التصويت ونشر المباراة الجديدة؟')) {
             await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
 
             const res = await fetch('/api/matches/add', {
