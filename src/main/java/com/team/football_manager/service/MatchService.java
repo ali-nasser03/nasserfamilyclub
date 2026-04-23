@@ -43,8 +43,7 @@ public class MatchService {
         return activeMatches.get(0);
     }
 
-    // كل دقيقة: إذا مرّ وقت المباراة، تُغلق ويتصفّر التصويت فقط
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 10000)
     public void deactivateExpiredMatches() {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
         LocalDateTime now = LocalDateTime.now();
@@ -59,6 +58,8 @@ public class MatchService {
                     attendance.setStatus(null); // تصفير التصويت فقط
                 }
                 attendanceRepository.saveAll(attendanceList);
+
+                System.out.println("✅ Match expired and votes reset: " + match.getLocation());
             }
         }
     }
