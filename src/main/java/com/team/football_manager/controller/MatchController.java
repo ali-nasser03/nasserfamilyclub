@@ -10,6 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/matches")
 public class MatchController {
+
     @Autowired
     private MatchService matchService;
 
@@ -25,8 +26,6 @@ public class MatchController {
 
     @GetMapping("/latest")
     public Match getLatestMatch() {
-        List<Match> matches = matchService.getAllMatches();
-        if (matches.isEmpty()) return null;
-        return matches.get(matches.size() - 1); // جلب آخر مباراة تم إنشاؤها
+        return matchService.getLatestActiveMatch();
     }
 }
