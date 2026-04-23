@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -16,16 +17,11 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    // 🔥 تسجيل لاعب
     @PostMapping("/register")
     public ResponseEntity<?> registerPlayer(@RequestBody User user) {
         try {
-            String fullName = user.getFullName() != null
-                    ? user.getFullName().trim().replaceAll("\\s+", " ")
-                    : "";
-
-            if (fullName.isEmpty()) {
-                return ResponseEntity.badRequest().body("الاسم مطلوب");
-            }
+            String fullName = user.getFullName().trim().replaceAll("\\s+", " ");
 
             if (userRepository.findByFullName(fullName).isPresent()) {
                 return ResponseEntity.badRequest().body("اللاعب مسجل مسبقًا");
@@ -39,54 +35,40 @@ public class UserController {
             newUser.setPassword("");
             newUser.setWorking(user.isWorking());
 
-            User saved = userRepository.save(newUser);
+            userRepository.save(newUser);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "تم التسجيل بنجاح");
-            response.put("id", saved.getId());
-            response.put("fullName", saved.getFullName());
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok("تم التسجيل");
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body("فشل التسجيل: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("فشل التسجيل");
         }
     }
 
+    // 🔥 تحقق من وجود لاعب
     @GetMapping("/check")
     public String checkPlayer(@RequestParam String name) {
-        String cleanedName = name == null ? "" : name.trim().replaceAll("\\s+", " ");
-
-        if (cleanedName.isEmpty()) {
-            return "NOT_FOUND";
-        }
-
-        boolean exists = userRepository.findByFullName(cleanedName).isPresent();
-        return exists ? "FOUND" : "NOT_FOUND";
+        return userRepository.findByFullName(name.trim())
+                .isPresent() ? "FOUND" : "NOT_FOUND";
     }
 
+    // 🔥 دخول الأدمن
     @PostMapping("/admin-login")
     public String adminLogin(@RequestBody Map<String, String> body) {
-        String fullName = body.get("fullName");
+
+        String name = body.get("fullName");
         String password = body.get("password");
 
-        if (fullName == null || password == null) {
-            return "FAIL";
-        }
+        User user = userRepository.findByFullName(name).orElse(null);
 
-        User user = userRepository.findByFullName(fullName.trim()).orElse(null);
+        if (user == null) return "FAIL";
+        if (!"ADMIN".equals(user.getRole())) return "FAIL";
 
-        if (user == null) {
-            return "FAIL";
-        }
+        return user.getPassword().equals(password) ? "SUCCESS" : "FAIL";
+    }
 
-        if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
-            return "FAIL";
-        }
-
-        String savedPassword = user.getPassword() == null ? "" : user.getPassword();
-        return savedPassword.equals(password) ? "SUCCESS" : "FAIL";
+    // 🔥 أهم API — يرجع فقط اللاعبين
+    @GetMapping("/players")
+    public List<User> getPlayersOnly() {
+        return userRepository.findByRole("PLAYER");
     }
 }
