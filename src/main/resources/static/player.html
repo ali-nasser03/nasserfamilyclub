@@ -1,28 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صفحة اللاعب</title>
+
+<style>
+body {
+    margin:0;
+    font-family:Arial;
+    background:#2c3e50;
+    color:white;
+}
+
+.container {
+    padding:15px;
+}
+
+.card {
+    background:white;
+    color:#333;
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+}
+
+button {
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.yes {background:#27ae60; color:white;}
+.no {background:#e74c3c; color:white;}
+.clear {background:#f39c12; color:white;}
+
+table {
+    width:100%;
+    border-collapse: collapse;
+}
+
+td, th {
+    padding:10px;
+    border-bottom:1px solid #ddd;
+    text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+        <h2 id="pName"></h2>
+
+        <div id="mInfo"></div>
+
+        <div id="myStatus" style="margin:10px 0; font-weight:bold;"></div>
+
+        <button class="yes" onclick="vote('YES')">سأحضر</button>
+        <button class="no" onclick="vote('NO')">لن أحضر</button>
+        <button class="clear" onclick="removeVote()">إلغاء التصويت</button>
+    </div>
+
+    <div class="card">
+        <h3>قائمة اللاعبين</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody id="pBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
 <script>
-async function updatePlayers() {
+
+const fullName = localStorage.getItem("fullName");
+
+document.getElementById("pName").innerText = fullName;
+
+async function update() {
     try {
-        const res = await fetch('/api/users/players');
+
+        // 🟢 المباراة
+        const mRes = await fetch('/api/matches/latest');
+        let m = null;
+
+        if (mRes.ok) {
+            try { m = await mRes.json(); } catch {}
+        }
+
+        if (!m || !m.active) {
+            document.getElementById("mInfo").innerHTML =
+                "🚫 لم يتم نشر المباراة بعد";
+        } else {
+            document.getElementById("mInfo").innerHTML =
+                `📍 ${m.location} <br> ⏰ ${m.dateTime.replace("T"," ")}`;
+        }
+
+        // 🟢 الحضور
+        const res = await fetch('/api/attendance/active-list');
         let data = await res.json();
 
         // 🔥 فلترة الأدمن
         data = data.filter(p => p.role !== "ADMIN");
 
-        const tbody = document.getElementById("pBody");
+        // 🟢 حالتي
+        const me = data.find(p => p.name === fullName);
 
+        if (me) {
+            if (me.status && me.status.includes("معفى")) {
+                document.getElementById("myStatus").innerHTML =
+                    "🟡 معفى من الدفع";
+            } else if (me.paid) {
+                document.getElementById("myStatus").innerHTML =
+                    "✅ دافع";
+            } else {
+                document.getElementById("myStatus").innerHTML =
+                    "❌ لم يدفع";
+            }
+        }
+
+        // 🟢 عرض اللاعبين
         let html = "";
+
         data.forEach(p => {
+
+            let payText = "";
+
+            if (p.status && p.status.includes("معفى")) {
+                payText = "🟡 معفى";
+            } else if (p.paid) {
+                payText = "✅ دافع";
+            } else {
+                payText = "❌ لم يدفع";
+            }
+
             html += `
                 <tr>
-                    <td>${p.fullName}</td>
-                    <td>${p.status || "—"}</td>
+                    <td>${p.name}</td>
+                    <td>${payText}</td>
                 </tr>
             `;
         });
 
-        tbody.innerHTML = html;
+        document.getElementById("pBody").innerHTML = html;
 
     } catch (e) {
         console.error(e);
     }
 }
+
+// 🟢 تصويت
+async function vote(status) {
+    await fetch('/api/attendance/register', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            playerName:fullName,
+            status:status
+        })
+    });
+    update();
+}
+
+// 🟢 حذف التصويت
+async function removeVote() {
+    await fetch('/api/attendance/remove', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            playerName:fullName
+        })
+    });
+    update();
+}
+
+update();
+
 </script>
+
+</body>
+</html>
