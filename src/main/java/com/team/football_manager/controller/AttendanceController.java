@@ -54,8 +54,15 @@ public class AttendanceController {
                     map.put("paid", att.isPaid());
                 }
             } else {
+                // لا توجد مباراة نشطة، لكن نظل نعرض حالة الدفع الأخيرة إن وجدت
+                Attendance latestAttendance = attendanceRepository.findAll().stream()
+                        .filter(a -> a.getPlayer() != null
+                                && a.getPlayer().getId().equals(user.getId()))
+                        .reduce((first, second) -> second)
+                        .orElse(null);
+
                 map.put("status", "لا توجد مباراة");
-                map.put("paid", false);
+                map.put("paid", latestAttendance != null && latestAttendance.isPaid());
             }
 
             return map;
@@ -146,23 +153,38 @@ public class AttendanceController {
         User player = userRepository.findById(playerId).orElse(null);
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
 
-        if (player == null || activeMatches.isEmpty()) {
+        if (player == null) {
             return "Error";
         }
 
-        Match currentMatch = activeMatches.get(0);
+        Attendance att;
 
-        Attendance att = attendanceRepository.findAll().stream()
-                .filter(a -> a.getPlayer() != null
-                        && a.getMatch() != null
-                        && a.getPlayer().getId().equals(playerId)
-                        && a.getMatch().getId().equals(currentMatch.getId()))
-                .findFirst()
-                .orElse(new Attendance());
+        if (!activeMatches.isEmpty()) {
+            Match currentMatch = activeMatches.get(0);
 
-        if (att.getId() == null) {
-            att.setPlayer(player);
-            att.setMatch(currentMatch);
+            att = attendanceRepository.findAll().stream()
+                    .filter(a -> a.getPlayer() != null
+                            && a.getMatch() != null
+                            && a.getPlayer().getId().equals(playerId)
+                            && a.getMatch().getId().equals(currentMatch.getId()))
+                    .findFirst()
+                    .orElse(new Attendance());
+
+            if (att.getId() == null) {
+                att.setPlayer(player);
+                att.setMatch(currentMatch);
+            }
+        } else {
+            // إذا لا توجد مباراة نشطة، نعدل آخر سجل دفع لهذا اللاعب أو ننشئ سجلًا جديدًا بدون تصويت
+            att = attendanceRepository.findAll().stream()
+                    .filter(a -> a.getPlayer() != null
+                            && a.getPlayer().getId().equals(playerId))
+                    .reduce((first, second) -> second)
+                    .orElse(new Attendance());
+
+            if (att.getId() == null) {
+                att.setPlayer(player);
+            }
         }
 
         att.setPaid(!att.isPaid());
@@ -187,14 +209,13 @@ public class AttendanceController {
         Map<String, List<String>> history = new HashMap<>();
 
         for (Attendance att : all) {
-            if ("YES".equals(att.getStatus())) {
+            if (att.getMatch() != null && "YES".equals(att.getStatus())) {
                 String matchKey = att.getMatch().getLocation()
                         + " (" + att.getMatch().getDateTime().toString().replace("T", " ") + ")";
                 history.computeIfAbsent(matchKey, k -> new ArrayList<>())
                         .add(att.getPlayer().getFullName());
             }
         }
-
         return history;
     }
 }
