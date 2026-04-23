@@ -245,8 +245,6 @@
     </section>
 </div>
 
-<!-- نفس الهيد والتصميم تبعك بدون تغيير -->
-
 <script>
     const slider = document.getElementById('slider');
 
@@ -254,13 +252,11 @@
         try {
             const res = await fetch('/api/attendance/active-list');
             const data = await res.json();
+            let filtered = data.filter(p => p.role !== "ADMIN");
 
-            // 🔥 فلترة الأدمن
-            const filtered = data.filter(p => p.role !== "ADMIN");
-
-            const yes = filtered.filter(p => p.status.includes('✅'));
-            const no = filtered.filter(p => p.status.includes('❌'));
-            const wait = filtered.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+            const yes = data.filter(p => p.status.includes('✅'));
+            const no = data.filter(p => p.status.includes('❌'));
+            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
 
             let voteHtml = '';
 
@@ -312,21 +308,13 @@
             document.getElementById('voteList').innerHTML =
                 voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-            // 🟡 تعديل الدفع (معفى)
-            document.getElementById('payList').innerHTML = filtered.length
-                ? filtered.map(p => `
+            document.getElementById('payList').innerHTML = data.length
+                ? data.map(p => `
                     <div class="row">
                         <span>${p.name}</span>
                         <label style="display:flex;align-items:center;gap:8px;">
-                            <input type="checkbox" style="width:auto;margin:0;"
-                                ${p.status && p.status.includes("معفى") ? "disabled" : ""}
-                                ${p.paid ? 'checked' : ''}
-                                onchange="toggle(${p.id})">
-                            <span>
-                                ${p.status && p.status.includes("معفى")
-                                    ? '🟡 معفى'
-                                    : (p.paid ? 'دافع' : 'غير دافع')}
-                            </span>
+                            <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
+                            <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
                         </label>
                     </div>
                 `).join('')
@@ -369,7 +357,8 @@
 
             document.getElementById('historyList').innerHTML = html;
         } catch (e) {
-            console.error(e);
+            console.error('Error loading history:', e);
+            document.getElementById('historyList').innerHTML = `<div class="empty">تعذر تحميل السجل</div>`;
         }
     }
 
@@ -392,8 +381,17 @@
             });
 
             if (res.ok) {
-                alert('تم نشر المباراة ⚽');
+                alert('تم نشر المباراة وتجهيز القائمة ⚽');
+                document.getElementById('loc').value = '';
+                document.getElementById('dt').value = '';
                 load();
+
+                slider.scrollTo({
+                    left: slider.clientWidth,
+                    behavior: 'smooth'
+                });
+            } else {
+                alert('حدث خطأ أثناء نشر المباراة');
             }
         }
     }
@@ -404,13 +402,15 @@
     }
 
     async function resetMonth() {
-        if (confirm('تصفير الدفع؟')) {
+        if (confirm('هل تريد تصفير الدفع للجميع؟')) {
             await fetch('/api/attendance/reset-month', { method: 'POST' });
+            alert('تم تصفير الدفع');
             load();
         }
     }
 
     window.onload = load;
 </script>
+
 </body>
 </html>
