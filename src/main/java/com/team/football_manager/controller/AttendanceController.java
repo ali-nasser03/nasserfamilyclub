@@ -54,7 +54,7 @@ public class AttendanceController {
                     map.put("paid", att.isPaid());
                 }
             } else {
-                // لا توجد مباراة نشطة، لكن نظل نعرض حالة الدفع الأخيرة إن وجدت
+                // لا توجد مباراة نشطة، لكن نُبقي حالة الدفع الأخيرة إن وُجدت
                 Attendance latestAttendance = attendanceRepository.findAll().stream()
                         .filter(a -> a.getPlayer() != null
                                 && a.getPlayer().getId().equals(user.getId()))
@@ -175,7 +175,6 @@ public class AttendanceController {
                 att.setMatch(currentMatch);
             }
         } else {
-            // إذا لا توجد مباراة نشطة، نعدل آخر سجل دفع لهذا اللاعب أو ننشئ سجلًا جديدًا بدون تصويت
             att = attendanceRepository.findAll().stream()
                     .filter(a -> a.getPlayer() != null
                             && a.getPlayer().getId().equals(playerId))
