@@ -1,13 +1,14 @@
 package com.team.football_manager;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootTest
-class FootballManagerApplicationTests {
+@EnableScheduling
+@SpringBootApplication
+public class FootballManagerApplication {
 
-	@Test
-	void contextLoads() {
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(FootballManagerApplication.class, args);
+    }
 }
