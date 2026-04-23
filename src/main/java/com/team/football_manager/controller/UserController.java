@@ -37,6 +37,7 @@ public class UserController {
             newUser.setAge(user.getAge());
             newUser.setRole("PLAYER");
             newUser.setPassword("");
+            newUser.setWorking(user.isWorking());
 
             User saved = userRepository.save(newUser);
 
@@ -64,5 +65,28 @@ public class UserController {
 
         boolean exists = userRepository.findByFullName(cleanedName).isPresent();
         return exists ? "FOUND" : "NOT_FOUND";
+    }
+
+    @PostMapping("/admin-login")
+    public String adminLogin(@RequestBody Map<String, String> body) {
+        String fullName = body.get("fullName");
+        String password = body.get("password");
+
+        if (fullName == null || password == null) {
+            return "FAIL";
+        }
+
+        User user = userRepository.findByFullName(fullName.trim()).orElse(null);
+
+        if (user == null) {
+            return "FAIL";
+        }
+
+        if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "FAIL";
+        }
+
+        String savedPassword = user.getPassword() == null ? "" : user.getPassword();
+        return savedPassword.equals(password) ? "SUCCESS" : "FAIL";
     }
 }
