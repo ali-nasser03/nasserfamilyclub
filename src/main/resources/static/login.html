@@ -35,7 +35,6 @@
             box-shadow: 0 12px 30px rgba(0,0,0,0.14);
             text-align: center;
             border: 1px solid #eee;
-            position: relative;
         }
 
         .logo {
@@ -145,6 +144,14 @@
             font-weight: 600;
         }
 
+        .switch-value {
+            font-size: 1rem;
+            color: #111;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
         .switch {
             position: relative;
             display: inline-block;
@@ -190,7 +197,6 @@
             transform: translateX(-26px);
         }
 
-        /* Popup admin */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -257,7 +263,8 @@
 
             input,
             .btn,
-            .switch-label {
+            .switch-label,
+            .switch-value {
                 font-size: 1rem;
             }
         }
@@ -271,7 +278,6 @@
     <h1>دخول الفريق</h1>
 
     <div class="hint">
-        الدخول يكون بالاسم الكامل، والتسجيل أول مرة من خلال نموذج التسجيل
     </div>
 
     <div id="loginSection">
@@ -285,11 +291,12 @@
         <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
 
         <div class="switch-row">
-<span class="switch-label" id="jobStatusText">بتشتغل؟ لا</span>
+            <span class="switch-label">بتشتغل؟</span>
             <label class="switch">
                 <input type="checkbox" id="registerWorking" onchange="updateWorkingLabel()">
                 <span class="slider-switch"></span>
             </label>
+            <span class="switch-value" id="jobStatusText">لا</span>
         </div>
 
         <button class="btn btn-confirm" onclick="registerPlayer()">تأكيد التسجيل</button>
@@ -297,7 +304,6 @@
     </div>
 </div>
 
-<!-- Admin Password Popup -->
 <div class="popup-overlay" id="adminPopup">
     <div class="popup-box">
         <h3>دخول الأدمن</h3>
@@ -330,7 +336,7 @@
 
     function updateWorkingLabel() {
         const isWorking = document.getElementById('registerWorking').checked;
-document.getElementById('jobStatusText').innerText = isWorking ? "بتشتغل؟ نعم" : "بتشتغل؟ لا";
+        document.getElementById('jobStatusText').innerText = isWorking ? "نعم" : "لا";
     }
 
     function openAdminPopup(name) {
