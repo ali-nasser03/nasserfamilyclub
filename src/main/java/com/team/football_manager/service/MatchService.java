@@ -45,6 +45,9 @@ public class MatchService {
 
     @Scheduled(fixedRate = 10000)
     public void deactivateExpiredMatches() {
+        
+        System.out.println("🔥 SCHEDULER RUNNING...");
+        
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
         LocalDateTime now = LocalDateTime.now();
 
