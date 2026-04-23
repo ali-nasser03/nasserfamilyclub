@@ -370,7 +370,7 @@
             return;
         }
 
-        if (confirm('تصفير التصويت ونشر المباراة الجديدة؟')) {
+        if (confirm('نشر المباراة الجديدة؟')) {
             await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
 
             const res = await fetch('/api/matches/add', {
