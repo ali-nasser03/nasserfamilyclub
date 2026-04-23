@@ -83,6 +83,11 @@
             font-size: 0.95rem;
             margin-bottom: 12px;
             line-height: 1.8;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
 
         .status-box {
@@ -104,11 +109,16 @@
             color: white;
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .btn-yes {
             background: #1f9d55;
         }
 
-        .btn-yes:hover {
+        .btn-yes:hover:not(:disabled) {
             background: #188044;
         }
 
@@ -116,7 +126,7 @@
             background: #d64541;
         }
 
-        .btn-no:hover {
+        .btn-no:hover:not(:disabled) {
             background: #b83835;
         }
 
@@ -124,7 +134,7 @@
             background: #f39c12;
         }
 
-        .btn-clear:hover {
+        .btn-clear:hover:not(:disabled) {
             background: #d68910;
         }
 
@@ -329,23 +339,34 @@
     async function update() {
         try {
             const mRes = await fetch('/api/matches/latest');
-            const m = await mRes.json();
+
+            let m = null;
+            if (mRes.ok) {
+                try {
+                    m = await mRes.json();
+                } catch {
+                    m = null;
+                }
+            }
 
             const yesBtn = document.getElementById('yesBtn');
             const noBtn = document.getElementById('noBtn');
             const clearBtn = document.getElementById('clearBtn');
 
-            if (m && m.active) {
+            if (!m || !m.active) {
                 document.getElementById('mInfo').innerHTML =
-                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}`;
-                yesBtn.disabled = false;
-                noBtn.disabled = false;
-                clearBtn.disabled = false;
-            } else {
-                document.getElementById('mInfo').innerHTML = "لا توجد مباراة نشطة حاليًا";
+                    "<span style='color:#c0392b;font-weight:bold'>🚫 لم يتم نشر المباراة بعد</span>";
+
                 yesBtn.disabled = true;
                 noBtn.disabled = true;
                 clearBtn.disabled = true;
+            } else {
+                document.getElementById('mInfo').innerHTML =
+                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}`;
+
+                yesBtn.disabled = false;
+                noBtn.disabled = false;
+                clearBtn.disabled = false;
             }
 
             const res = await fetch('/api/attendance/active-list');
@@ -377,7 +398,13 @@
 
         } catch (e) {
             console.error(e);
-            document.getElementById('mInfo').innerHTML = "حدث خطأ أثناء تحميل البيانات";
+
+            document.getElementById('mInfo').innerHTML =
+                "<span style='color:#c0392b;font-weight:bold'>🚫 لم يتم نشر المباراة بعد</span>";
+
+            document.getElementById('yesBtn').disabled = true;
+            document.getElementById('noBtn').disabled = true;
+            document.getElementById('clearBtn').disabled = true;
         }
     }
 
