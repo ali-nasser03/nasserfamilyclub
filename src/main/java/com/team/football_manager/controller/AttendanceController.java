@@ -32,43 +32,41 @@ public class AttendanceController {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
         Match currentMatch = activeMatches.isEmpty() ? null : activeMatches.get(0);
 
-        return allUsers.stream()
-                .filter(user -> !"ADMIN".equals(user.getRole()))
-                .map(user -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", user.getId());
-                    map.put("name", user.getFullName());
-                    map.put("isEmployed", user.isEmployed()); // مهم لصفحة اللاعب والأدمن
+        return allUsers.stream().map(user -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", user.getId());
+            map.put("name", user.getFullName());
 
-                    if (currentMatch != null) {
-                        Attendance att = attendanceRepository.findAll().stream()
-                                .filter(a -> a.getMatch() != null
-                                        && a.getPlayer() != null
-                                        && a.getMatch().getId().equals(currentMatch.getId())
-                                        && a.getPlayer().getId().equals(user.getId()))
-                                .findFirst()
-                                .orElse(null);
+            if (currentMatch != null) {
+                Attendance att = attendanceRepository.findAll().stream()
+                        .filter(a -> a.getMatch() != null
+                                && a.getPlayer() != null
+                                && a.getMatch().getId().equals(currentMatch.getId())
+                                && a.getPlayer().getId().equals(user.getId()))
+                        .findFirst()
+                        .orElse(null);
 
-                        if (att == null || att.getStatus() == null || att.getStatus().isEmpty()) {
-                            map.put("status", "لم يصوت");
-                            map.put("paid", att != null && att.isPaid());
-                        } else {
-                            map.put("status", "YES".equals(att.getStatus()) ? "✅ سأحضر" : "❌ معتذر");
-                            map.put("paid", att.isPaid());
-                        }
-                    } else {
-                        Attendance latestAttendance = attendanceRepository.findAll().stream()
-                                .filter(a -> a.getPlayer() != null
-                                        && a.getPlayer().getId().equals(user.getId()))
-                                .reduce((first, second) -> second)
-                                .orElse(null);
+                if (att == null || att.getStatus() == null || att.getStatus().isEmpty()) {
+                    map.put("status", "لم يصوت");
+                    map.put("paid", att != null && att.isPaid());
+                } else {
+                    map.put("status", "YES".equals(att.getStatus()) ? "✅ سأحضر" : "❌ معتذر");
+                    map.put("paid", att.isPaid());
+                }
+            } else {
+                // لا توجد مباراة نشطة، لكن نُبقي حالة الدفع الأخيرة إن وُجدت
+                Attendance latestAttendance = attendanceRepository.findAll().stream()
+                        .filter(a -> a.getPlayer() != null
+                                && a.getPlayer().getId().equals(user.getId()))
+                        .reduce((first, second) -> second)
+                        .orElse(null);
 
-                        map.put("status", "لا توجد مباراة");
-                        map.put("paid", latestAttendance != null && latestAttendance.isPaid());
-                    }
+                map.put("status", "لا توجد مباراة");
+                map.put("paid", latestAttendance != null && latestAttendance.isPaid());
+            }
 
-                    return map;
-                }).collect(Collectors.toList());
+            return map;
+        }).collect(Collectors.toList());
     }
 
     @PostMapping("/reset-all-votes")
@@ -140,7 +138,9 @@ public class AttendanceController {
                 .findFirst()
                 .orElse(null);
 
-        if (attendance == null) return "No Vote Found";
+        if (attendance == null) {
+            return "No Vote Found";
+        }
 
         attendance.setStatus(null);
         attendanceRepository.save(attendance);
@@ -153,15 +153,15 @@ public class AttendanceController {
         User player = userRepository.findById(playerId).orElse(null);
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
 
-        if (player == null) return "Error";
-
-        // المعفيون لا يمكن تعديل دفعهم
-        if (!player.isEmployed()) return "Exempt";
+        if (player == null) {
+            return "Error";
+        }
 
         Attendance att;
 
         if (!activeMatches.isEmpty()) {
             Match currentMatch = activeMatches.get(0);
+
             att = attendanceRepository.findAll().stream()
                     .filter(a -> a.getPlayer() != null
                             && a.getMatch() != null
@@ -181,7 +181,9 @@ public class AttendanceController {
                     .reduce((first, second) -> second)
                     .orElse(new Attendance());
 
-            if (att.getId() == null) att.setPlayer(player);
+            if (att.getId() == null) {
+                att.setPlayer(player);
+            }
         }
 
         att.setPaid(!att.isPaid());
