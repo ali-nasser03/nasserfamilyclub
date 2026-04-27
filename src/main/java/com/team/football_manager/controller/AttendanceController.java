@@ -36,7 +36,7 @@ public class AttendanceController {
             Map<String, Object> map = new HashMap<>();
             map.put("id", user.getId());
             map.put("name", user.getFullName());
-            map.put("isExempt", user.isExempt());
+            map.put("isExempt", user.isExempt()); // إرسال حالة الإعفاء
 
             if (currentMatch != null) {
                 Attendance att = attendanceRepository.findAll().stream()
@@ -59,7 +59,7 @@ public class AttendanceController {
     @PostMapping("/toggle-payment/{playerId}")
     public String togglePayment(@PathVariable Long playerId) {
         User user = userRepository.findById(playerId).orElse(null);
-        if (user == null || user.isExempt()) return "Error: User Exempt";
+        if (user == null || user.isExempt()) return "Exempt";
 
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
         Attendance att;
@@ -84,27 +84,33 @@ public class AttendanceController {
         return "Updated";
     }
 
-    @PostMapping("/reset-all-votes")
-    public ResponseEntity<String> resetAllVotes() {
-        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        if (activeMatches.isEmpty()) return ResponseEntity.ok("No active match");
-        List<Attendance> currentAtt = attendanceRepository.findByMatchId(activeMatches.get(0).getId());
-        currentAtt.forEach(a -> a.setStatus(null));
-        attendanceRepository.saveAll(currentAtt);
-        return ResponseEntity.ok("Success");
-    }
-
     @PostMapping("/register")
     public String register(@RequestBody Map<String, String> data) {
         User player = userRepository.findByFullName(data.get("playerName")).orElse(null);
         List<Match> active = matchRepository.findByIsActiveTrue();
         if (player == null || active.isEmpty()) return "Error";
+        
         Attendance a = attendanceRepository.findAll().stream()
                 .filter(att -> att.getPlayer().getId().equals(player.getId()) && att.getMatch().getId().equals(active.get(0).getId()))
                 .findFirst().orElse(new Attendance());
+        
         a.setPlayer(player); a.setMatch(active.get(0)); a.setStatus(data.get("status"));
         attendanceRepository.save(a);
         return "Success";
+    }
+
+    @PostMapping("/remove")
+    public String removeVote(@RequestBody Map<String, String> data) {
+        User player = userRepository.findByFullName(data.get("playerName")).orElse(null);
+        List<Match> active = matchRepository.findByIsActiveTrue();
+        if (player == null || active.isEmpty()) return "Error";
+
+        Attendance a = attendanceRepository.findAll().stream()
+                .filter(att -> att.getPlayer().getId().equals(player.getId()) && att.getMatch().getId().equals(active.get(0).getId()))
+                .findFirst().orElse(null);
+
+        if (a != null) { a.setStatus(null); attendanceRepository.save(a); }
+        return "Removed";
     }
 
     @PostMapping("/reset-month")
@@ -113,6 +119,16 @@ public class AttendanceController {
         all.forEach(a -> a.setPaid(false));
         attendanceRepository.saveAll(all);
         return "Done";
+    }
+
+    @PostMapping("/reset-all-votes")
+    public ResponseEntity<String> resetVotes() {
+        List<Match> active = matchRepository.findByIsActiveTrue();
+        if (active.isEmpty()) return ResponseEntity.ok("No Match");
+        List<Attendance> current = attendanceRepository.findByMatchId(active.get(0).getId());
+        current.forEach(a -> a.setStatus(null));
+        attendanceRepository.saveAll(current);
+        return ResponseEntity.ok("Reset Done");
     }
 
     @GetMapping("/history")
