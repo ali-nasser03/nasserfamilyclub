@@ -15,92 +15,205 @@
 <div id="playersManageList"></div>
 
 <script>
+    const slider = document.getElementById('slider');
 
-function isAdmin(p){ return p.role === "ADMIN"; }
-
-async function load(){
-
-    const res = await fetch('/api/attendance/active-list');
-    const filtered = (await res.json()).filter(p => !isAdmin(p));
-
-    // 🔥 تقسيم
-    const normal = filtered.filter(p => p.working !== false);
-    const exempt = filtered.filter(p => p.working === false);
-
-    let html = "";
-
-    // لاعبين عاديين
-    normal.forEach(p=>{
-        html += `
-        <div>
-            ${p.name}
-            <input type="checkbox" ${p.paid ? 'checked' : ''}
-            onchange="toggle(${p.id})">
-        </div>
-        `;
-    });
-
-    // 🟡 المعفيين آخر القائمة
-    if(exempt.length){
-        html += `<h4>المعفيين</h4>`;
-        exempt.forEach(p=>{
-            html += `<div>${p.name} - معفى</div>`;
-        });
+    function isAdmin(p) {
+        return p.role && p.role.toUpperCase() === "ADMIN";
     }
 
-    document.getElementById('payList').innerHTML = html;
+    function isExempt(p) {
+        return p.exempt === true || p.working === false;
+    }
 
-    loadPlayers();
-}
+    function safeStatus(p) {
+        return p.status || "";
+    }
 
-async function toggle(id){
-    await fetch('/api/attendance/toggle-payment/'+id,{method:'POST'});
-    load();
-}
+    async function load() {
+        try {
+            const res = await fetch('/api/attendance/active-list');
+            const rawData = await res.json();
+            const data = rawData.filter(p => !isAdmin(p));
 
-async function loadPlayers(){
+            const yes = data.filter(p => safeStatus(p).includes('✅'));
+            const no = data.filter(p => safeStatus(p).includes('❌'));
+            const wait = data.filter(p =>
+                !safeStatus(p).includes('✅') &&
+                !safeStatus(p).includes('❌')
+            );
 
-    const res = await fetch('/api/users/players');
-    const players = await res.json();
+            let voteHtml = '';
 
-    let html = "";
+            if (yes.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⚽ حاضرون</span>
+                        <span>(${yes.length})</span>
+                    </div>
+                `;
+                voteHtml += yes.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:green;font-weight:bold;">✅</span>
+                    </div>
+                `).join('');
+            }
 
-    players.forEach(p=>{
-        html += `
-        <div style="margin-bottom:15px;">
-            <input id="name-${p.id}" value="${p.fullName}">
-            <input id="age-${p.id}" type="number" value="${p.age}">
-            
-            <label>
-                يعمل؟
-                <input id="working-${p.id}" type="checkbox" ${p.working ? 'checked':''}>
-            </label>
+            if (no.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>❌ معتذرون</span>
+                        <span>(${no.length})</span>
+                    </div>
+                `;
+                voteHtml += no.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:red;font-weight:bold;">❌</span>
+                    </div>
+                `).join('');
+            }
 
-            <button onclick="savePlayer(${p.id})">حفظ</button>
-        </div>
-        `;
-    });
+            if (wait.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⏳ لم يصوتوا</span>
+                        <span>(${wait.length})</span>
+                    </div>
+                `;
+                voteHtml += wait.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:gray;">لم يصوت</span>
+                    </div>
+                `).join('');
+            }
 
-    document.getElementById('playersManageList').innerHTML = html;
-}
+            document.getElementById('voteList').innerHTML =
+                voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-async function savePlayer(id){
+            const normalPlayers = data.filter(p => !isExempt(p));
+            const exemptPlayers = data.filter(p => isExempt(p));
 
-    const fullName = document.getElementById(`name-${id}`).value;
-    const age = document.getElementById(`age-${id}`).value;
-    const working = document.getElementById(`working-${id}`).checked;
+            let payHtml = '';
 
-    await fetch('/api/users/update/'+id,{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({fullName,age,working})
-    });
+            payHtml += normalPlayers.map(p => `
+                <div class="row">
+                    <span>${p.name}</span>
+                    <label style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
+                        <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
+                    </label>
+                </div>
+            `).join('');
 
-    alert("تم التعديل");
-    load();
-}
+            if (exemptPlayers.length) {
+                payHtml += `
+                    <div class="section-header">
+                        <span>🟡 معفيون من الدفع</span>
+                        <span>(${exemptPlayers.length})</span>
+                    </div>
+                `;
 
-load();
+                payHtml += exemptPlayers.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:orange;font-weight:bold;">معفى</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('payList').innerHTML =
+                payHtml || `<div class="empty">لا يوجد لاعبين</div>`;
+
+            await loadHistory();
+
+        } catch (e) {
+            console.error('Error loading data:', e);
+        }
+    }
+
+    async function loadHistory() {
+        try {
+            const res = await fetch('/api/attendance/history');
+            const data = await res.json();
+            const keys = Object.keys(data);
+
+            if (!keys.length) {
+                document.getElementById('historyList').innerHTML = `<div class="empty">لا يوجد سجل بعد</div>`;
+                return;
+            }
+
+            let html = '';
+            keys.forEach(matchKey => {
+                html += `
+                    <div class="section-header">
+                        <span>${matchKey}</span>
+                        <span>(${data[matchKey].length})</span>
+                    </div>
+                `;
+                html += data[matchKey].map(name => `
+                    <div class="row">
+                        <span>${name}</span>
+                        <span style="color:green;font-weight:bold;">✅</span>
+                    </div>
+                `).join('');
+            });
+
+            document.getElementById('historyList').innerHTML = html;
+        } catch (e) {
+            console.error('Error loading history:', e);
+        }
+    }
+
+    async function createNewMatch() {
+        const location = document.getElementById('loc').value;
+        const dateTime = document.getElementById('dt').value;
+
+        if (!location || !dateTime) {
+            alert('عبئ المكان والوقت أولاً');
+            return;
+        }
+
+        if (confirm('نشر المباراة الجديدة؟')) {
+            await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+
+            const res = await fetch('/api/matches/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ location, dateTime, active: true })
+            });
+
+            if (res.ok) {
+                alert('تم نشر المباراة وتجهيز القائمة ⚽');
+                document.getElementById('loc').value = '';
+                document.getElementById('dt').value = '';
+                load();
+
+                slider.scrollTo({
+                    left: slider.clientWidth,
+                    behavior: 'smooth'
+                });
+            } else {
+                alert('حدث خطأ أثناء نشر المباراة');
+            }
+        }
+    }
+
+    async function toggle(id) {
+        await fetch(`/api/attendance/toggle-payment/${id}`, { method: 'POST' });
+        load();
+    }
+
+    async function resetMonth() {
+        if (confirm('هل تريد تصفير الدفع للجميع؟')) {
+            await fetch('/api/attendance/reset-month', { method: 'POST' });
+            alert('تم تصفير الدفع');
+            load();
+        }
+    }
+
+    window.onload = load;
 </script>
 
 </body>
