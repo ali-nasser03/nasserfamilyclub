@@ -1,490 +1,109 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفحة اللاعب</title>
-    <style>
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(180deg, #223648, #2c3e50);
-            color: white;
-            overflow: hidden;
-        }
-
-        .header {
-            text-align: center;
-            padding: 14px 12px;
-            background: #1f2d3a;
-            font-size: 20px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .swipe-hint {
-            text-align: center;
-            padding: 8px 12px;
-            background: #243544;
-            font-size: 14px;
-            color: #dfe6ec;
-        }
-
-        .slider {
-            display: flex;
-            width: 100%;
-            height: calc(100vh - 86px);
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .slider::-webkit-scrollbar { display: none; }
-
-        .page {
-            flex: 0 0 100%;
-            width: 100%;
-            scroll-snap-align: start;
-            overflow-y: auto;
-            padding: 16px;
-        }
-
-        .card, .table-container {
-            width: 100%;
-            max-width: 430px;
-            border-radius: 22px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-            margin: 0 auto;
-        }
-
-        .card {
-            background: #ecf0f1;
-            color: #2c3e50;
-            padding: 24px 18px;
-            text-align: center;
-        }
-
-        .player-name {
-            margin: 0 0 12px;
-            font-size: 1.6rem;
-        }
-
-        .match-info {
-            background: #dfe6e9;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            margin-bottom: 12px;
-            line-height: 1.8;
-            min-height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .status-box {
-            font-weight: bold;
-            margin-bottom: 14px;
-            min-height: 24px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            margin: 7px 0;
-            border: none;
-            border-radius: 14px;
-            font-size: 1rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.25s;
-            color: white;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-yes { background: #1f9d55; }
-        .btn-yes:hover:not(:disabled) { background: #188044; }
-
-        .btn-no { background: #d64541; }
-        .btn-no:hover:not(:disabled) { background: #b83835; }
-
-        .btn-clear { background: #f39c12; }
-        .btn-clear:hover:not(:disabled) { background: #d68910; }
-
-        .btn-logout { background: #4b5d6b; }
-        .btn-logout:hover { background: #3d4d59; }
-
-        .table-container {
-            background: white;
-            color: #333;
-            padding: 16px;
-        }
-
-        .table-title {
-            text-align: center;
-            color: #2c3e50;
-            margin: 0 0 14px;
-            font-size: 1.2rem;
-        }
-
-        .table-wrapper { overflow-x: auto; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 280px;
-        }
-
-        th, td {
-            padding: 12px 8px;
-            border-bottom: 1px solid #eee;
-            text-align: center;
-            font-size: 0.95rem;
-        }
-
-        th {
-            background: #34495e;
-            color: white;
-        }
-
-        .empty-note {
-            color: #666;
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        .section-header {
-            background: #eef3f7;
-            color: #2c3e50;
-            padding: 10px 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            margin: 14px 0 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 10px;
-            border-bottom: 1px solid #ececec;
-        }
-
-        .row:last-child { border-bottom: none; }
-
-        .page-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 14px;
-        }
-
-        .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #b8c4cc;
-        }
-
-        .dot.active {
-            background: #27ae60;
-            transform: scale(1.12);
-        }
-
-        @media (max-width: 480px) {
-            .page { padding: 12px; }
-            .card, .table-container { border-radius: 18px; }
-            .card { padding: 18px 14px; }
-            .player-name { font-size: 1.35rem; }
-            .match-info, th, td, .btn { font-size: 0.95rem; }
-            .btn { padding: 13px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اللاعب</title>
 </head>
+
 <body>
 
-<script>
-    const fullName = localStorage.getItem('fullName');
-    if (!fullName) {
-        window.location.href = 'login.html';
-    }
-</script>
+<h2 id="playerHeader"></h2>
 
-<div class="header" id="playerHeader">صفحة اللاعب</div>
-<div class="swipe-hint">اسحب يمين أو يسار للتنقل بين الصفحات</div>
+<div id="mInfo"></div>
+<div id="myStatus"></div>
 
-<div class="slider" id="slider">
+<button onclick="vote('YES')">سأحضر</button>
+<button onclick="vote('NO')">أعتذر</button>
+<button onclick="removeVote()">إلغاء التصويت</button>
 
-    <section class="page">
-        <div class="card">
-            <h2 id="pName" class="player-name">كابتن</h2>
-
-            <div id="mInfo" class="match-info">جاري تحميل معلومات المباراة...</div>
-
-            <div id="myStatus" class="status-box"></div>
-
-            <button class="btn btn-yes" id="yesBtn" onclick="vote('YES')">⚽ سأحضر</button>
-            <button class="btn btn-no" id="noBtn" onclick="vote('NO')">❌ أعتذر</button>
-            <button class="btn btn-clear" id="clearBtn" onclick="removeVote()">🧹 إلغاء التصويت</button>
-            <button class="btn btn-logout" onclick="logout()">تسجيل الخروج</button>
-
-            <div class="page-indicator">
-                <span class="dot active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="table-container">
-            <h3 class="table-title">📊 قائمة الحضور</h3>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>اللاعب</th>
-                        <th>الحالة</th>
-                    </tr>
-                    </thead>
-                    <tbody id="pBody"></tbody>
-                </table>
-            </div>
-
-            <div id="emptyNote" class="empty-note" style="display:none;">لا يوجد بيانات حاليًا</div>
-
-            <div class="page-indicator">
-                <span class="dot"></span>
-                <span class="dot active"></span>
-                <span class="dot"></span>
-            </div>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="table-container">
-            <h3 class="table-title">📜 سجل المباريات</h3>
-            <div id="historyList"></div>
-
-            <div class="page-indicator">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot active"></span>
-            </div>
-        </div>
-    </section>
-
-</div>
+<table border="1">
+<thead>
+<tr>
+<th>اللاعب</th>
+<th>الحالة</th>
+</tr>
+</thead>
+<tbody id="pBody"></tbody>
+</table>
 
 <script>
-    document.getElementById('pName').innerText = "كابتن " + fullName;
-    document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
+const fullName = localStorage.getItem('fullName');
 
-    function isAdmin(p) {
-        return p.role && p.role.toUpperCase() === "ADMIN";
+document.getElementById('playerHeader').innerText = fullName;
+
+function isAdmin(p){ return p.role === "ADMIN"; }
+function isExempt(p){ return p.working === false; }
+
+async function update(){
+
+    const mRes = await fetch('/api/matches/latest');
+    let m = mRes.ok ? await mRes.json() : null;
+
+    if(!m || !m.active){
+        document.getElementById('mInfo').innerText = "لم يتم نشر مباراة";
+    }else{
+        document.getElementById('mInfo').innerText =
+            m.location + " - " + m.dateTime.replace("T"," ");
     }
 
-    function isExempt(p) {
-        return p.exempt === true || p.working === false;
-    }
+    const res = await fetch('/api/attendance/active-list');
+    const data = (await res.json()).filter(p => !isAdmin(p));
 
-    function safeStatus(p) {
-        return p.status || "";
-    }
+    const me = data.find(p => p.name === fullName);
 
-    async function update() {
-        try {
-            const mRes = await fetch('/api/matches/latest');
-
-            let m = null;
-            if (mRes.ok) {
-                try {
-                    m = await mRes.json();
-                } catch {
-                    m = null;
-                }
-            }
-
-            const yesBtn = document.getElementById('yesBtn');
-            const noBtn = document.getElementById('noBtn');
-            const clearBtn = document.getElementById('clearBtn');
-
-            if (!m || !m.active) {
-                document.getElementById('mInfo').innerHTML =
-                    "<span style='color:#c0392b;font-weight:bold'>🚫 لم يتم نشر المباراة بعد</span>";
-                yesBtn.disabled = true;
-                noBtn.disabled = true;
-                clearBtn.disabled = true;
-            } else {
-                document.getElementById('mInfo').innerHTML =
-                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}`;
-                yesBtn.disabled = false;
-                noBtn.disabled = false;
-                clearBtn.disabled = false;
-            }
-
-            const res = await fetch('/api/attendance/active-list');
-            const rawData = await res.json();
-
-            const data = rawData.filter(p => !isAdmin(p));
-
-            const me = data.find(p => p.name === fullName);
-
-            if (me) {
-                if (isExempt(me)) {
-                    document.getElementById('myStatus').innerHTML =
-                        "<span style='color:orange'>🟡 حالة دفعك: معفى</span>";
-                } else if (me.paid) {
-                    document.getElementById('myStatus').innerHTML =
-                        "<span style='color:green'>✅ حالة دفعك: دافع</span>";
-                } else {
-                    document.getElementById('myStatus').innerHTML =
-                        "<span style='color:#c0392b'>⏳ حالة دفعك: لم تدفع</span>";
-                }
-            } else {
-                document.getElementById('myStatus').innerHTML =
-                    "<span style='color:#555'>لا يوجد سجل دفع لك حتى الآن</span>";
-            }
-
-            const yes = data.filter(p => safeStatus(p).includes('✅'));
-            const no = data.filter(p => safeStatus(p).includes('❌'));
-            const wait = data.filter(p =>
-                !safeStatus(p).includes('✅') &&
-                !safeStatus(p).includes('❌')
-            );
-
-            let html = "";
-
-            html += yes.map(p =>
-                `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`
-            ).join('');
-
-            html += no.map(p =>
-                `<tr><td>${p.name}</td><td style="color:red; font-weight:bold;">معتذر ❌</td></tr>`
-            ).join('');
-
-            html += wait.map(p => {
-                const payText = isExempt(p)
-                    ? "<br><span style='color:orange;font-weight:bold;'>🟡 معفى من الدفع</span>"
-                    : "";
-
-                return `<tr><td>${p.name}</td><td style="color:gray;">لم يصوت${payText}</td></tr>`;
-            }).join('');
-
-            document.getElementById('pBody').innerHTML = html;
-            document.getElementById('emptyNote').style.display = data.length ? 'none' : 'block';
-
-            await loadHistory();
-
-        } catch (e) {
-            console.error(e);
-
-            document.getElementById('mInfo').innerHTML =
-                "<span style='color:#c0392b;font-weight:bold'>🚫 لم يتم نشر المباراة بعد</span>";
-
-            document.getElementById('yesBtn').disabled = true;
-            document.getElementById('noBtn').disabled = true;
-            document.getElementById('clearBtn').disabled = true;
+    // 🔥 فقط هو يشوف حالته
+    if(me){
+        if(isExempt(me)){
+            document.getElementById('myStatus').innerText = "معفى";
+        }else if(me.paid){
+            document.getElementById('myStatus').innerText = "دافع";
+        }else{
+            document.getElementById('myStatus').innerText = "لم يدفع";
         }
     }
 
-    async function loadHistory() {
-        try {
-            const res = await fetch('/api/attendance/history');
-            const data = await res.json();
-            const keys = Object.keys(data);
+    // ❌ ما نعرض المعفيين
+    const yes = data.filter(p => p.status?.includes('✅'));
+    const no = data.filter(p => p.status?.includes('❌'));
+    const wait = data.filter(p => !p.status);
 
-            if (!keys.length) {
-                document.getElementById('historyList').innerHTML =
-                    `<div class="empty-note">لا يوجد سجل بعد</div>`;
-                return;
-            }
+    let html = "";
 
-            let html = '';
+    yes.forEach(p=>{
+        html += `<tr><td>${p.name}</td><td>حاضر</td></tr>`;
+    });
 
-            keys.forEach(matchKey => {
-                html += `
-                    <div class="section-header">
-                        <span>${matchKey}</span>
-                        <span>(${data[matchKey].length})</span>
-                    </div>
-                `;
+    no.forEach(p=>{
+        html += `<tr><td>${p.name}</td><td>معتذر</td></tr>`;
+    });
 
-                html += data[matchKey].map(name => `
-                    <div class="row">
-                        <span>${name}</span>
-                        <span style="color:green;font-weight:bold;">✅</span>
-                    </div>
-                `).join('');
-            });
+    wait.forEach(p=>{
+        html += `<tr><td>${p.name}</td><td>لم يصوت</td></tr>`;
+    });
 
-            document.getElementById('historyList').innerHTML = html;
+    document.getElementById('pBody').innerHTML = html;
+}
 
-        } catch (e) {
-            console.error(e);
-            document.getElementById('historyList').innerHTML =
-                `<div class="empty-note">تعذر تحميل السجل</div>`;
-        }
-    }
+async function vote(status){
+    await fetch('/api/attendance/register',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({playerName:fullName,status})
+    });
+    update();
+}
 
-    async function vote(status) {
-        try {
-            await fetch('/api/attendance/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    playerName: fullName,
-                    status: status
-                })
-            });
+async function removeVote(){
+    await fetch('/api/attendance/remove',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({playerName:fullName})
+    });
+    update();
+}
 
-            update();
-
-        } catch (e) {
-            console.error(e);
-            alert("حدث خطأ أثناء إرسال التصويت");
-        }
-    }
-
-    async function removeVote() {
-        if (!confirm("هل تريد إلغاء تصويتك؟")) return;
-
-        try {
-            await fetch('/api/attendance/remove', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    playerName: fullName
-                })
-            });
-
-            update();
-
-        } catch (e) {
-            console.error(e);
-            alert("حدث خطأ أثناء إلغاء التصويت");
-        }
-    }
-
-    function logout() {
-        localStorage.removeItem('fullName');
-        window.location.href = 'login.html';
-    }
-
-    window.onload = update;
+update();
 </script>
 
 </body>
