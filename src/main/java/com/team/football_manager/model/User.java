@@ -11,14 +11,15 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_name")
-    private String fullName;
-
     private String username;
     private int age;
     private String password;
+
+    @Column(name = "full_name")
+    private String fullName;
+
     private String role; // ADMIN or PLAYER
 
-    // ميزة الإعفاء
-    private boolean isExempt = false; 
+    @Column(name = "is_employed", nullable = false, columnDefinition = "boolean default true")
+    private boolean isEmployed = true; // true = بيشتغل, false = ما بيشتغل (معفي من الدفع)
 }
