@@ -19,49 +19,28 @@ public class UserController {
         String inputName = creds.get("username") != null ? creds.get("username").trim() : "";
         String inputPass = creds.get("password");
 
-        // 1. فحص دخول الأدمن
         if ("admin".equalsIgnoreCase(inputName)) {
             User admin = userRepository.findByUsernameIgnoreCase("admin").orElse(null);
-            if (admin != null && admin.getPassword().equals(inputPass)) {
-                return ResponseEntity.ok(admin);
-            }
-            return ResponseEntity.status(401).body("كلمة سر الأدمن غير صحيحة");
+            if (admin != null && admin.getPassword().equals(inputPass)) return ResponseEntity.ok(admin);
+            return ResponseEntity.status(401).body("كلمة السر خطأ");
         }
 
-        // 2. فحص دخول اللاعبين
-        Optional<User> player = userRepository.findByFullNameIgnoreCase(inputName);
-        if (player.isPresent()) {
-            return ResponseEntity.ok(player.get());
-        }
-        return ResponseEntity.status(404).body("هذا الاسم غير مسجل لدينا");
+        return userRepository.findByFullNameIgnoreCase(inputName)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(404).body("الاسم غير مسجل"));
     }
 
     @PostMapping("/toggle-exempt/{id}")
     public ResponseEntity<?> toggleExempt(@PathVariable Long id) {
-        User user = userRepository.findById(id).orElseThrow();
-        user.setExempt(!user.isExempt());
-        userRepository.save(user);
+        User u = userRepository.findById(id).orElseThrow();
+        u.setExempt(!u.isExempt());
+        userRepository.save(u);
         return ResponseEntity.ok("Done");
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deletePlayer(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         userRepository.deleteById(id);
         return ResponseEntity.ok("Deleted");
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        String name = user.getFullName() != null ? user.getFullName().trim() : "";
-        if (name.isEmpty() || userRepository.findByFullNameIgnoreCase(name).isPresent()) 
-            return ResponseEntity.badRequest().body("الاسم فارغ أو مسجل مسبقاً");
-        
-        User newUser = new User();
-        newUser.setFullName(name); 
-        newUser.setUsername(name); 
-        newUser.setRole("PLAYER"); 
-        newUser.setPassword("");
-        userRepository.save(newUser);
-        return ResponseEntity.ok("Success");
     }
 }
