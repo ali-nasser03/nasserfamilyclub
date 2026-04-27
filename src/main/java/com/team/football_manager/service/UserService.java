@@ -5,25 +5,24 @@ import com.team.football_manager.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class UserService {
+
     @Autowired
     private UserRepository userRepository;
 
-    public User login(String name, String password) {
-        Optional<User> user = userRepository.findByFullName(name);
+    public User register(User user) {
+        return userRepository.save(user);
+    }
 
-        if (user.isPresent()) {
-            User u = user.get();
-            // إذا كان مدير، يجب التأكد من كلمة السر
-            if (u.getRole().equals("ADMIN")) {
-                return u.getPassword().equals(password) ? u : null;
-            }
-            // إذا كان لاعب، يدخل بالاسم فقط
-            return u;
-        }
-        return null;
+    public boolean checkAdminLogin(String fullName, String password) {
+        User user = userRepository.findByFullName(fullName).orElse(null);
+
+        if (user == null) return false;
+        if (!"ADMIN".equalsIgnoreCase(user.getRole())) return false;
+
+        String savedPassword = user.getPassword() == null ? "" : user.getPassword();
+
+        return savedPassword.equals(password);
     }
 }
