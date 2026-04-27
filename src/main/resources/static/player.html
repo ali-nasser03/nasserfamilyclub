@@ -36,58 +36,16 @@
 <body>
 
 <script>
+    // التأكد من وجود الاسم
     const fullName = localStorage.getItem('fullName');
     if (!fullName) window.location.href = 'login.html';
-</script>
 
-<div class="header" id="playerHeader">اللاعب: </div>
-<div class="swipe-hint">اسحب لليسار لرؤية قائمة الحضور ⬅️</div>
-
-<div class="slider" id="slider">
-    <section class="page">
-        <div class="card">
-            <h2 id="pName" class="player-name">كابتن</h2>
-            <div id="mInfo" class="match-info">جاري تحميل المعلومات...</div>
-            
-            <div id="myStatus" class="status-box"></div>
-
-            <button class="btn btn-yes" id="yesBtn" onclick="vote('YES')">⚽ سأحضر</button>
-            <button class="btn btn-no" id="noBtn" onclick="vote('NO')">❌ أعتذر</button>
-            <button class="btn btn-clear" id="clearBtn" onclick="removeVote()">🧹 إلغاء التصويت</button>
-            <button class="btn btn-logout" onclick="logout()">تسجيل الخروج</button>
-
-            <div class="page-indicator">
-                <span class="dot active"></span>
-                <span class="dot"></span>
-            </div>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="table-container">
-            <h3 class="table-title">📊 قائمة الحضور</h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr><th>اللاعب</th><th>الحالة</th></tr>
-                    </thead>
-                    <tbody id="pBody"></tbody>
-                </table>
-            </div>
-            <div class="page-indicator">
-                <span class="dot"></span>
-                <span class="dot active"></span>
-            </div>
-        </div>
-    </section>
-</div>
-
-<script>
     document.getElementById('pName').innerText = "كابتن " + fullName;
     document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
 
     async function update() {
         try {
+            // 1. جلب معلومات المباراة
             const mRes = await fetch('/api/matches/latest');
             let m = mRes.ok ? await mRes.json() : null;
 
@@ -97,45 +55,82 @@
 
             if (!m || !m.active) {
                 document.getElementById('mInfo').innerHTML = "<span style='color:#c0392b;font-weight:bold'>🚫 لم يتم نشر المباراة بعد</span>";
-                yesBtn.disabled = noBtn.disabled = clearBtn.disabled = true;
+                if(yesBtn) yesBtn.disabled = true;
+                if(noBtn) noBtn.disabled = true;
+                if(clearBtn) clearBtn.disabled = true;
             } else {
                 document.getElementById('mInfo').innerHTML = `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}`;
-                yesBtn.disabled = noBtn.disabled = clearBtn.disabled = false;
+                if(yesBtn) yesBtn.disabled = false;
+                if(noBtn) noBtn.disabled = false;
+                if(clearBtn) clearBtn.disabled = false;
             }
 
+            // 2. جلب قائمة اللاعبين وحالة الدفع
             const res = await fetch('/api/attendance/active-list');
             const data = await res.json();
 
-            // منطق حالة الدفع المحدث
+            // تحديث حالة الدفع الخاصة بك
             const me = data.find(p => p.name === fullName);
             const statusDiv = document.getElementById('myStatus');
-            if (me) {
+            if (me && statusDiv) {
                 if (me.paid) {
                     statusDiv.innerHTML = "<span style='color:green'>✅ حالة دفعك: دافع</span>";
-                } else if (me.isExempt) { // تأكد أن السيرفر يرسل خاصية مثل isExempt أو عدلها حسب منطقك
-                    statusDiv.innerHTML = "<span style='color:#2980b9'>🛡️ حالة دفعك: أنت معفي (لا تعمل)</span>";
+                } else if (me.isExempt || me.job === 'none' || me.name.includes("معفي")) { 
+                    // ملاحظة: غيرت الشرط ليقرأ أي دلالة على أنه معفي
+                    statusDiv.innerHTML = "<span style='color:#2980b9'>🛡️ حالة دفعك: أنت معفي</span>";
                 } else {
                     statusDiv.innerHTML = "<span style='color:#c0392b'>⏳ حالة دفعك: لم تدفع</span>";
                 }
             }
 
-            // تحديث جدول الحضور
-            const yes = data.filter(p => p.status.includes('✅'));
-            const no = data.filter(p => p.status.includes('❌'));
-            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+            // 3. تحديث جدول قائمة اللاعبين (قائمة الحضور)
+            const pBody = document.getElementById('pBody');
+            if (pBody) {
+                const yes = data.filter(p => p.status && p.status.includes('✅'));
+                const no = data.filter(p => p.status && p.status.includes('❌'));
+                const wait = data.filter(p => !p.status || (!p.status.includes('✅') && !p.status.includes('❌')));
 
-            document.getElementById('pBody').innerHTML = 
-                yes.map(p => `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`).join('') +
-                no.map(p => `<tr><td>${p.name}</td><td style="color:red; font-weight:bold;">معتذر ❌</td></tr>`).join('') +
-                wait.map(p => `<tr><td>${p.name}</td><td style="color:gray;">لم يصوت</td></tr>`).join('');
+                let html = "";
+                html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`).join('');
+                html += no.map(p => `<tr><td>${p.name}</td><td style="color:red; font-weight:bold;">معتذر ❌</td></tr>`).join('');
+                html += wait.map(p => `<tr><td>${p.name}</td><td style="color:gray;">لم يصوت</td></tr>`).join('');
 
-        } catch (e) { console.error(e); }
+                pBody.innerHTML = html || "<tr><td colspan='2'>لا يوجد لاعبين حالياً</td></tr>";
+            }
+
+        } catch (e) { 
+            console.error("حدث خطأ في التحديث:", e); 
+        }
     }
 
-    // الوظائف الباقية (vote, removeVote, logout) تبقى كما هي في كودك الأصلي
-    async function vote(status) { /* ... نفس الكود السابق ... */ }
-    async function removeVote() { /* ... نفس الكود السابق ... */ }
-    function logout() { localStorage.removeItem('fullName'); window.location.href = 'login.html'; }
+    // وظائف التصويت
+    async function vote(status) {
+        try {
+            await fetch('/api/attendance/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ playerName: fullName, status: status })
+            });
+            update();
+        } catch (e) { alert("خطأ في التصويت"); }
+    }
+
+    async function removeVote() {
+        if (!confirm("هل تريد إلغاء تصويتك؟")) return;
+        try {
+            await fetch('/api/attendance/remove', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ playerName: fullName })
+            });
+            update();
+        } catch (e) { alert("خطأ في الإلغاء"); }
+    }
+
+    function logout() {
+        localStorage.removeItem('fullName');
+        window.location.href = 'login.html';
+    }
 
     window.onload = update;
 </script>
