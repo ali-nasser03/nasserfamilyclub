@@ -28,7 +28,8 @@ public class AttendanceController {
 
     @GetMapping("/active-list")
     public List<Map<String, Object>> getActiveAttendance() {
-        List<User> allUsers = userRepository.findAll()
+
+        List<User> players = userRepository.findAll()
                 .stream()
                 .filter(user -> !"ADMIN".equalsIgnoreCase(user.getRole()))
                 .collect(Collectors.toList());
@@ -36,11 +37,13 @@ public class AttendanceController {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
         Match currentMatch = activeMatches.isEmpty() ? null : activeMatches.get(0);
 
-        return allUsers.stream().map(user -> {
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (User user : players) {
+
             Map<String, Object> map = new HashMap<>();
             map.put("id", user.getId());
             map.put("name", user.getFullName());
-            map.put("role", user.getRole());
 
             if (currentMatch != null) {
                 Attendance att = attendanceRepository.findAll().stream()
@@ -51,44 +54,17 @@ public class AttendanceController {
                         .findFirst()
                         .orElse(null);
 
-                if (att == null || att.getStatus() == null || att.getStatus().isEmpty()) {
-                    map.put("status", "لم يصوت");
-                    map.put("paid", att != null && att.isPaid());
-                } else {
-                    map.put("status", "YES".equals(att.getStatus()) ? "✅ سأحضر" : "❌ معتذر");
-                    map.put("paid", att.isPaid());
-                }
+                map.put("status", (att == null || att.getStatus() == null) ? "لم يصوت" : att.getStatus());
+                map.put("paid", att != null && att.isPaid());
             } else {
-                Attendance latestAttendance = attendanceRepository.findAll().stream()
-                        .filter(a -> a.getPlayer() != null
-                                && a.getPlayer().getId().equals(user.getId()))
-                        .reduce((first, second) -> second)
-                        .orElse(null);
-
                 map.put("status", "لا توجد مباراة");
-                map.put("paid", latestAttendance != null && latestAttendance.isPaid());
+                map.put("paid", false);
             }
 
-            return map;
-        }).collect(Collectors.toList());
-    }
-
-    @PostMapping("/reset-all-votes")
-    public ResponseEntity<String> resetAllVotes() {
-        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        if (activeMatches.isEmpty()) {
-            return ResponseEntity.ok("No active match to reset");
+            result.add(map);
         }
 
-        Match currentMatch = activeMatches.get(0);
-        List<Attendance> currentAttendance = attendanceRepository.findByMatchId(currentMatch.getId());
-
-        for (Attendance att : currentAttendance) {
-            att.setStatus(null);
-        }
-
-        attendanceRepository.saveAll(currentAttendance);
-        return ResponseEntity.ok("Success: Attendance Reset");
+        return result;
     }
 
     @PostMapping("/register")
@@ -100,7 +76,7 @@ public class AttendanceController {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
 
         if (player == null || activeMatches.isEmpty()) {
-            return "Error: No Active Match";
+            return "Error";
         }
 
         Match currentMatch = activeMatches.get(0);
@@ -129,7 +105,7 @@ public class AttendanceController {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
 
         if (player == null || activeMatches.isEmpty()) {
-            return "Error: No Active Match";
+            return "Error";
         }
 
         Match currentMatch = activeMatches.get(0);
@@ -142,51 +118,37 @@ public class AttendanceController {
                 .findFirst()
                 .orElse(null);
 
-        if (attendance == null) {
-            return "No Vote Found";
-        }
+        if (attendance == null) return "No Vote";
 
         attendance.setStatus(null);
         attendanceRepository.save(attendance);
 
-        return "Vote Removed";
+        return "Removed";
     }
 
     @PostMapping("/toggle-payment/{playerId}")
     public String togglePayment(@PathVariable Long playerId) {
+
         User player = userRepository.findById(playerId).orElse(null);
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
 
-        if (player == null) {
-            return "Error";
-        }
+        if (player == null) return "Error";
 
-        Attendance att;
+        Match currentMatch = activeMatches.isEmpty() ? null : activeMatches.get(0);
 
-        if (!activeMatches.isEmpty()) {
-            Match currentMatch = activeMatches.get(0);
+        Attendance att = attendanceRepository.findAll().stream()
+                .filter(a -> a.getPlayer() != null
+                        && a.getMatch() != null
+                        && currentMatch != null
+                        && a.getPlayer().getId().equals(playerId)
+                        && a.getMatch().getId().equals(currentMatch.getId()))
+                .findFirst()
+                .orElse(new Attendance());
 
-            att = attendanceRepository.findAll().stream()
-                    .filter(a -> a.getPlayer() != null
-                            && a.getMatch() != null
-                            && a.getPlayer().getId().equals(playerId)
-                            && a.getMatch().getId().equals(currentMatch.getId()))
-                    .findFirst()
-                    .orElse(new Attendance());
-
-            if (att.getId() == null) {
-                att.setPlayer(player);
+        if (att.getId() == null) {
+            att.setPlayer(player);
+            if (currentMatch != null) {
                 att.setMatch(currentMatch);
-            }
-        } else {
-            att = attendanceRepository.findAll().stream()
-                    .filter(a -> a.getPlayer() != null
-                            && a.getPlayer().getId().equals(playerId))
-                    .reduce((first, second) -> second)
-                    .orElse(new Attendance());
-
-            if (att.getId() == null) {
-                att.setPlayer(player);
             }
         }
 
@@ -194,31 +156,5 @@ public class AttendanceController {
         attendanceRepository.save(att);
 
         return "Updated";
-    }
-
-    @PostMapping("/reset-month")
-    public String resetAllPayments() {
-        List<Attendance> all = attendanceRepository.findAll();
-        for (Attendance a : all) {
-            a.setPaid(false);
-        }
-        attendanceRepository.saveAll(all);
-        return "Done";
-    }
-
-    @GetMapping("/history")
-    public Map<String, List<String>> getMatchHistory() {
-        List<Attendance> all = attendanceRepository.findAll();
-        Map<String, List<String>> history = new HashMap<>();
-
-        for (Attendance att : all) {
-            if (att.getMatch() != null && "YES".equals(att.getStatus())) {
-                String matchKey = att.getMatch().getLocation()
-                        + " (" + att.getMatch().getDateTime().toString().replace("T", " ") + ")";
-                history.computeIfAbsent(matchKey, k -> new ArrayList<>())
-                        .add(att.getPlayer().getFullName());
-            }
-        }
-        return history;
     }
 }
