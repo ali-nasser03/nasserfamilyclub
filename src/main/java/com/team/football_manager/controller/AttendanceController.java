@@ -55,7 +55,11 @@ public class AttendanceController {
                         .orElse(null);
 
                 map.put("status", (att == null || att.getStatus() == null) ? "لم يصوت" : att.getStatus());
-                map.put("paid", att != null && att.isPaid());
+                if(!user.isWorking()){
+    map.put("paid", "معفي");
+} else {
+    map.put("paid", att != null && att.isPaid());
+}
             } else {
                 map.put("status", "لا توجد مباراة");
                 map.put("paid", false);
