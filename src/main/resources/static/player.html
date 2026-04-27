@@ -57,7 +57,7 @@ async function loadStatus(){
     const me = data.find(p => p.name === playerName);
 
     if(!me){
-        document.getElementById("matchStatus").innerText = "لم يتم نشر المباراة بعد 🚫";
+        document.getElementById("matchStatus").innerText = "🚫 لم يتم نشر المباراة بعد";
         return;
     }
 
