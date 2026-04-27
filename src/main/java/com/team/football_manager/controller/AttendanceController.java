@@ -7,9 +7,11 @@ import com.team.football_manager.repository.AttendanceRepository;
 import com.team.football_manager.repository.MatchRepository;
 import com.team.football_manager.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/attendance")
@@ -25,202 +27,101 @@ public class AttendanceController {
     private MatchRepository matchRepository;
 
     @GetMapping("/active-list")
-    public List<Map<String, Object>> getActiveList() {
-        List<User> users = userRepository.findAll();
+    public List<Map<String, Object>> getActiveAttendance() {
+        List<User> allUsers = userRepository.findAll();
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        Match activeMatch = activeMatches.isEmpty() ? null : activeMatches.get(0);
+        Match currentMatch = activeMatches.isEmpty() ? null : activeMatches.get(0);
 
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        for (User user : users) {
-            if (user.getRole() != null && user.getRole().equalsIgnoreCase("ADMIN")) {
-                continue;
-            }
-
-            Attendance attendance = null;
-
-            if (activeMatch != null) {
-                Long userId = user.getId();
-                Long matchId = activeMatch.getId();
-
-                attendance = attendanceRepository.findAll().stream()
-                        .filter(a -> a.getPlayer() != null
-                                && a.getMatch() != null
-                                && a.getPlayer().getId().equals(userId)
-                                && a.getMatch().getId().equals(matchId))
-                        .findFirst()
-                        .orElse(null);
-            }
-
-            boolean paid = false;
-            String status = "لم يصوت";
-
-            if (attendance != null) {
-                paid = attendance.isPaid();
-
-                if ("YES".equalsIgnoreCase(attendance.getStatus())) {
-                    status = "✅";
-                } else if ("NO".equalsIgnoreCase(attendance.getStatus())) {
-                    status = "❌";
-                }
-            }
-
+        return allUsers.stream().map(user -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", user.getId());
             map.put("name", user.getFullName());
-            map.put("role", user.getRole());
-            map.put("working", user.isWorking());
-            map.put("paid", paid);
-            map.put("status", status);
+            map.put("isExempt", user.isExempt());
 
-            result.add(map);
-        }
+            if (currentMatch != null) {
+                Attendance att = attendanceRepository.findAll().stream()
+                        .filter(a -> a.getMatch() != null && a.getPlayer() != null
+                                && a.getMatch().getId().equals(currentMatch.getId())
+                                && a.getPlayer().getId().equals(user.getId()))
+                        .findFirst().orElse(null);
 
-        return result;
-    }
-
-    @PostMapping("/register")
-    public String register(@RequestBody Map<String, String> body) {
-        String playerName = body.get("playerName");
-        String status = body.get("status");
-
-        User player = userRepository.findByFullName(playerName).orElse(null);
-        Match activeMatch = matchRepository.findByIsActiveTrue().stream().findFirst().orElse(null);
-
-        if (player == null || activeMatch == null) {
-            return "ERROR";
-        }
-
-        Attendance attendance = attendanceRepository.findAll().stream()
-                .filter(a -> a.getPlayer() != null
-                        && a.getMatch() != null
-                        && a.getPlayer().getId().equals(player.getId())
-                        && a.getMatch().getId().equals(activeMatch.getId()))
-                .findFirst()
-                .orElse(new Attendance());
-
-        attendance.setPlayer(player);
-        attendance.setMatch(activeMatch);
-        attendance.setStatus(status);
-
-        attendanceRepository.save(attendance);
-        return "OK";
-    }
-
-    @PostMapping("/remove")
-    public String remove(@RequestBody Map<String, String> body) {
-        String playerName = body.get("playerName");
-
-        User player = userRepository.findByFullName(playerName).orElse(null);
-        Match activeMatch = matchRepository.findByIsActiveTrue().stream().findFirst().orElse(null);
-
-        if (player == null || activeMatch == null) {
-            return "ERROR";
-        }
-
-        attendanceRepository.findAll().stream()
-                .filter(a -> a.getPlayer() != null
-                        && a.getMatch() != null
-                        && a.getPlayer().getId().equals(player.getId())
-                        && a.getMatch().getId().equals(activeMatch.getId()))
-                .findFirst()
-                .ifPresent(a -> {
-                    a.setStatus(null);
-                    attendanceRepository.save(a);
-                });
-
-        return "OK";
+                map.put("status", (att == null || att.getStatus() == null) ? "لم يصوت" : 
+                       ("YES".equals(att.getStatus()) ? "✅ سأحضر" : "❌ معتذر"));
+                map.put("paid", att != null && att.isPaid());
+            } else {
+                map.put("status", "لا توجد مباراة");
+                map.put("paid", false);
+            }
+            return map;
+        }).collect(Collectors.toList());
     }
 
     @PostMapping("/toggle-payment/{playerId}")
     public String togglePayment(@PathVariable Long playerId) {
-        User player = userRepository.findById(playerId).orElse(null);
+        User user = userRepository.findById(playerId).orElse(null);
+        if (user == null || user.isExempt()) return "Error: User Exempt";
 
-        if (player == null) {
-            return "ERROR";
+        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
+        Attendance att;
+
+        if (!activeMatches.isEmpty()) {
+            Match currentMatch = activeMatches.get(0);
+            att = attendanceRepository.findAll().stream()
+                    .filter(a -> a.getPlayer() != null && a.getMatch() != null
+                            && a.getPlayer().getId().equals(playerId)
+                            && a.getMatch().getId().equals(currentMatch.getId()))
+                    .findFirst().orElse(new Attendance());
+            if (att.getId() == null) { att.setPlayer(user); att.setMatch(currentMatch); }
+        } else {
+            att = attendanceRepository.findAll().stream()
+                    .filter(a -> a.getPlayer() != null && a.getPlayer().getId().equals(playerId))
+                    .reduce((f, s) -> s).orElse(new Attendance());
+            if (att.getId() == null) att.setPlayer(user);
         }
 
-        if (!player.isWorking()) {
-            return "EXEMPT";
-        }
-
-        Match activeMatch = matchRepository.findByIsActiveTrue().stream().findFirst().orElse(null);
-
-        Attendance attendance = null;
-
-        if (activeMatch != null) {
-            attendance = attendanceRepository.findAll().stream()
-                    .filter(a -> a.getPlayer() != null
-                            && a.getMatch() != null
-                            && a.getPlayer().getId().equals(player.getId())
-                            && a.getMatch().getId().equals(activeMatch.getId()))
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        if (attendance == null) {
-            attendance = new Attendance();
-            attendance.setPlayer(player);
-            if (activeMatch != null) {
-                attendance.setMatch(activeMatch);
-            }
-            attendance.setStatus(null);
-            attendance.setPaid(false);
-        }
-
-        attendance.setPaid(!attendance.isPaid());
-        attendanceRepository.save(attendance);
-
-        return "OK";
-    }
-
-    @PostMapping("/reset-month")
-    public String resetMonth() {
-        List<Attendance> all = attendanceRepository.findAll();
-
-        for (Attendance a : all) {
-            if (a.getPlayer() != null && a.getPlayer().isWorking()) {
-                a.setPaid(false);
-            }
-        }
-
-        attendanceRepository.saveAll(all);
-        return "OK";
+        att.setPaid(!att.isPaid());
+        attendanceRepository.save(att);
+        return "Updated";
     }
 
     @PostMapping("/reset-all-votes")
-    public String resetAllVotes() {
-        Match activeMatch = matchRepository.findByIsActiveTrue().stream().findFirst().orElse(null);
+    public ResponseEntity<String> resetAllVotes() {
+        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
+        if (activeMatches.isEmpty()) return ResponseEntity.ok("No active match");
+        List<Attendance> currentAtt = attendanceRepository.findByMatchId(activeMatches.get(0).getId());
+        currentAtt.forEach(a -> a.setStatus(null));
+        attendanceRepository.saveAll(currentAtt);
+        return ResponseEntity.ok("Success");
+    }
 
-        if (activeMatch == null) {
-            return "NO_MATCH";
-        }
+    @PostMapping("/register")
+    public String register(@RequestBody Map<String, String> data) {
+        User player = userRepository.findByFullName(data.get("playerName")).orElse(null);
+        List<Match> active = matchRepository.findByIsActiveTrue();
+        if (player == null || active.isEmpty()) return "Error";
+        Attendance a = attendanceRepository.findAll().stream()
+                .filter(att -> att.getPlayer().getId().equals(player.getId()) && att.getMatch().getId().equals(active.get(0).getId()))
+                .findFirst().orElse(new Attendance());
+        a.setPlayer(player); a.setMatch(active.get(0)); a.setStatus(data.get("status"));
+        attendanceRepository.save(a);
+        return "Success";
+    }
 
-        List<Attendance> list = attendanceRepository.findByMatchId(activeMatch.getId());
-
-        for (Attendance a : list) {
-            a.setStatus(null);
-        }
-
-        attendanceRepository.saveAll(list);
-        return "OK";
+    @PostMapping("/reset-month")
+    public String resetPayments() {
+        List<Attendance> all = attendanceRepository.findAll();
+        all.forEach(a -> a.setPaid(false));
+        attendanceRepository.saveAll(all);
+        return "Done";
     }
 
     @GetMapping("/history")
-    public Map<String, List<String>> history() {
-        Map<String, List<String>> result = new LinkedHashMap<>();
-
-        for (Attendance a : attendanceRepository.findAll()) {
-            if (a.getPlayer() == null || a.getMatch() == null) continue;
-            if (a.getPlayer().getRole() != null && a.getPlayer().getRole().equalsIgnoreCase("ADMIN")) continue;
-
-            if ("YES".equalsIgnoreCase(a.getStatus())) {
-                String key = a.getMatch().getLocation() + " - " + a.getMatch().getDateTime();
-                result.putIfAbsent(key, new ArrayList<>());
-                result.get(key).add(a.getPlayer().getFullName());
-            }
-        }
-
-        return result;
+    public Map<String, List<String>> getHistory() {
+        Map<String, List<String>> history = new HashMap<>();
+        attendanceRepository.findAll().stream().filter(a -> a.getMatch() != null && "YES".equals(a.getStatus())).forEach(a -> {
+            String key = a.getMatch().getLocation() + " (" + a.getMatch().getDateTime().toString().replace("T", " ") + ")";
+            history.computeIfAbsent(key, k -> new ArrayList<>()).add(a.getPlayer().getFullName());
+        });
+        return history;
     }
 }
