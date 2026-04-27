@@ -105,6 +105,18 @@
             background: #cf711d;
         }
 
+        .delete-btn {
+            border: none;
+            background: #c0392b;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #a93226;
+        }
+
         .section-header {
             background: #eef3f7;
             color: #2c3e50;
@@ -219,6 +231,7 @@
     <section class="page">
         <div class="card">
             <h2>💰 الدفع</h2>
+            <div id="payStats"></div>
             <div id="payList"></div>
             <button class="warning-btn" onclick="resetMonth()">تصفير الدفع </button>
 
@@ -250,14 +263,18 @@
 <script>
     const slider = document.getElementById('slider');
 
+    function sortByName(list) {
+        return [...list].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+    }
+
     async function load() {
         try {
             const res = await fetch('/api/attendance/active-list');
             const data = await res.json();
 
-            const yes = data.filter(p => p.status.includes('✅'));
-            const no = data.filter(p => p.status.includes('❌'));
-            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+            const yes = sortByName(data.filter(p => p.status.includes('✅')));
+            const no = sortByName(data.filter(p => p.status.includes('❌')));
+            const wait = sortByName(data.filter(p => !p.status.includes('✅') && !p.status.includes('❌')));
 
             let voteHtml = '';
 
@@ -309,13 +326,29 @@
             document.getElementById('voteList').innerHTML =
                 voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
+            const paidCount = data.filter(p => p.paid === true).length;
+            const unpaidCount = data.filter(p => p.paid === false).length;
+            const exemptCount = data.filter(p => p.paid === "معفي").length;
+
+            document.getElementById('payStats').innerHTML = `
+                <div class="section-header">
+                    <span>✅ دافعين: ${paidCount}</span>
+                    <span>❌ غير دافعين: ${unpaidCount}</span>
+                </div>
+                <div class="section-header">
+                    <span>🟡 معفيين: ${exemptCount}</span>
+                    <span>المجموع: ${data.length}</span>
+                </div>
+            `;
+
             const paymentSorted = [...data].sort((a, b) => {
                 const aExempt = a.paid === "معفي";
                 const bExempt = b.paid === "معفي";
 
                 if (aExempt && !bExempt) return 1;
                 if (!aExempt && bExempt) return -1;
-                return 0;
+
+                return String(a.name || '').localeCompare(String(b.name || ''), 'ar');
             });
 
             document.getElementById('payList').innerHTML = paymentSorted.length
@@ -367,6 +400,7 @@
                     </label>
 
                     <button class="main-btn" onclick="updatePlayer(${p.id})">حفظ التعديل</button>
+                    <button class="delete-btn" onclick="deletePlayer(${p.id}, '${String(p.fullName || '').replace(/'/g, "\\'")}')">حذف اللاعب</button>
                 </div>
             `).join('')
             : `<div class="empty">لا يوجد لاعبين</div>`;
@@ -405,6 +439,29 @@
         }
 
         alert('تم تعديل بيانات اللاعب');
+        load();
+    }
+
+    async function deletePlayer(id, name) {
+        const confirmation = prompt(`لحذف اللاعب "${name}" اكتب حذف`);
+
+        if (confirmation !== "حذف") {
+            alert('تم إلغاء الحذف');
+            return;
+        }
+
+        const res = await fetch(`/api/users/delete/${id}`, {
+            method: 'DELETE'
+        });
+
+        const text = await res.text();
+
+        if (!res.ok) {
+            alert(text);
+            return;
+        }
+
+        alert('تم حذف اللاعب');
         load();
     }
 
@@ -448,11 +505,16 @@
     }
 
     async function resetMonth() {
-        if (confirm('هل تريد تصفير الدفع للجميع؟')) {
-            await fetch('/api/attendance/reset-month', { method: 'POST' });
-            alert('تم تصفير الدفع');
-            load();
+        const confirmation = prompt('لتأكيد تصفير الدفع للجميع، اكتب كلمة: تصفير');
+
+        if (confirmation !== "تصفير") {
+            alert('تم إلغاء تصفير الدفع');
+            return;
         }
+
+        await fetch('/api/attendance/reset-month', { method: 'POST' });
+        alert('تم تصفير الدفع');
+        load();
     }
 
     window.onload = load;
