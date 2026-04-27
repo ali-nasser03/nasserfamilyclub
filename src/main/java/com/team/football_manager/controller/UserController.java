@@ -84,33 +84,26 @@ public class UserController {
         return userRepository.findByRole("PLAYER");
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> updatePlayer(@PathVariable Long id, @RequestBody User updatedUser) {
+   @PutMapping("/update/{id}")
+    public ResponseEntity<?> updatePlayer(@PathVariable Long id, @RequestBody User updated) {
+    
         User user = userRepository.findById(id).orElse(null);
-
+    
         if (user == null) {
-            return ResponseEntity.badRequest().body("اللاعب غير موجود");
+            return ResponseEntity.badRequest().body("مش موجود");
         }
-
+    
         if ("ADMIN".equalsIgnoreCase(user.getRole())) {
-            return ResponseEntity.badRequest().body("لا يمكن تعديل الأدمن من هنا");
+            return ResponseEntity.badRequest().body("ممنوع تعديل الأدمن");
         }
-
-        String fullName = updatedUser.getFullName() != null
-                ? updatedUser.getFullName().trim().replaceAll("\\s+", " ")
-                : "";
-
-        if (fullName.isEmpty()) {
-            return ResponseEntity.badRequest().body("الاسم مطلوب");
-        }
-
-        user.setFullName(fullName);
-        user.setUsername(fullName);
-        user.setAge(updatedUser.getAge());
-        user.setWorking(updatedUser.isWorking());
-
+    
+        user.setFullName(updated.getFullName());
+        user.setUsername(updated.getFullName());
+        user.setAge(updated.getAge());
+        user.setWorking(updated.isWorking());
+    
         userRepository.save(user);
-
+    
         return ResponseEntity.ok("تم التعديل");
     }
 }
