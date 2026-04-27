@@ -3,33 +3,26 @@ package com.team.football_manager.model;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "app_users")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String fullName;
     private String username;
-    private String password;
-    private String role;
     private int age;
+    private String password;
 
-    // 🔥 الجديد
-    private boolean working;
+    @Column(name = "full_name")
+    private String fullName;
 
-    // ===== Getters & Setters =====
+    private String role;
+
+    private boolean working = true;
 
     public Long getId() {
         return id;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
     }
 
     public String getUsername() {
@@ -40,12 +33,28 @@ public class User {
         this.username = username;
     }
 
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
     public String getPassword() {
         return password;
     }
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getRole() {
@@ -56,15 +65,6 @@ public class User {
         this.role = role;
     }
 
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    // 🔥 المهم
     public boolean isWorking() {
         return working;
     }
