@@ -125,118 +125,6 @@
             display: block;
         }
 
-        .switch-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            background: #f7f7f7;
-            border: 1px solid #ddd;
-            border-radius: 14px;
-            padding: 12px 14px;
-            margin-bottom: 14px;
-            text-align: right;
-        }
-
-        .switch-label {
-            font-size: 1rem;
-            color: #222;
-            font-weight: 600;
-        }
-
-        .switch-value {
-            font-size: 1rem;
-            color: #111;
-            font-weight: bold;
-            min-width: 30px;
-            text-align: center;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 56px;
-            height: 30px;
-            flex-shrink: 0;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            margin: 0;
-            padding: 0;
-        }
-
-        .slider-switch {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background-color: #ccc;
-            transition: .3s;
-            border-radius: 30px;
-        }
-
-        .slider-switch:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            right: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-        }
-
-        .switch input:checked + .slider-switch {
-            background-color: #27ae60;
-        }
-
-        .switch input:checked + .slider-switch:before {
-            transform: translateX(-26px);
-        }
-
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            padding: 20px;
-        }
-
-        .popup-overlay.active {
-            display: flex;
-        }
-
-        .popup-box {
-            width: 100%;
-            max-width: 360px;
-            background: white;
-            color: #222;
-            border-radius: 20px;
-            padding: 22px 18px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-            text-align: center;
-        }
-
-        .popup-box h3 {
-            margin-top: 0;
-            margin-bottom: 14px;
-        }
-
-        .popup-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .popup-actions .btn {
-            margin-bottom: 0;
-        }
-
         @media (max-width: 480px) {
             body {
                 padding: 12px;
@@ -262,10 +150,9 @@
             }
 
             input,
-            .btn,
-            .switch-label,
-            .switch-value {
+            .btn {
                 font-size: 1rem;
+                padding: 13px;
             }
         }
     </style>
@@ -278,6 +165,7 @@
     <h1>دخول الفريق</h1>
 
     <div class="hint">
+        الدخول يكون بالاسم الكامل، والتسجيل أول مرة بالاسم والعمر
     </div>
 
     <div id="loginSection">
@@ -289,35 +177,12 @@
     <div id="registerSection" class="register-box">
         <input type="text" id="registerName" placeholder="أدخل الاسم الثلاثي">
         <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
-
-        <div class="switch-row">
-            <span class="switch-label">بتشتغل؟</span>
-            <label class="switch">
-                <input type="checkbox" id="registerWorking" onchange="updateWorkingLabel()">
-                <span class="slider-switch"></span>
-            </label>
-            <span class="switch-value" id="jobStatusText">لا</span>
-        </div>
-
         <button class="btn btn-confirm" onclick="registerPlayer()">تأكيد التسجيل</button>
         <button class="btn btn-cancel" onclick="hideRegisterForm()">إلغاء</button>
     </div>
 </div>
 
-<div class="popup-overlay" id="adminPopup">
-    <div class="popup-box">
-        <h3>دخول الأدمن</h3>
-        <input type="password" id="adminPassword" placeholder="أدخل كلمة السر">
-        <div class="popup-actions">
-            <button class="btn btn-confirm" onclick="checkAdminPassword()">دخول</button>
-            <button class="btn btn-cancel" onclick="closeAdminPopup()">إلغاء</button>
-        </div>
-    </div>
-</div>
-
 <script>
-    let pendingAdminName = "";
-
     function normalizeName(name) {
         return name.trim().replace(/\s+/g, ' ');
     }
@@ -330,25 +195,6 @@
         document.getElementById('registerSection').classList.remove('active');
         document.getElementById('registerName').value = "";
         document.getElementById('registerAge').value = "";
-        document.getElementById('registerWorking').checked = false;
-        updateWorkingLabel();
-    }
-
-    function updateWorkingLabel() {
-        const isWorking = document.getElementById('registerWorking').checked;
-        document.getElementById('jobStatusText').innerText = isWorking ? "نعم" : "لا";
-    }
-
-    function openAdminPopup(name) {
-        pendingAdminName = name;
-        document.getElementById('adminPopup').classList.add('active');
-        document.getElementById('adminPassword').value = "";
-    }
-
-    function closeAdminPopup() {
-        document.getElementById('adminPopup').classList.remove('active');
-        document.getElementById('adminPassword').value = "";
-        pendingAdminName = "";
     }
 
     async function login() {
@@ -361,7 +207,8 @@
         }
 
         if (name === "Admin" || name === "محمود ناصر") {
-            openAdminPopup(name);
+            localStorage.setItem('fullName', name);
+            window.location.href = 'admin.html';
             return;
         }
 
@@ -382,45 +229,10 @@
         }
     }
 
-    async function checkAdminPassword() {
-        const password = document.getElementById('adminPassword').value;
-
-        if (!password) {
-            alert("أدخل كلمة السر");
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/users/admin-login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    fullName: pendingAdminName,
-                    password: password
-                })
-            });
-
-            const result = await res.text();
-
-            if (result !== "SUCCESS") {
-                alert("كلمة السر غير صحيحة");
-                return;
-            }
-
-            localStorage.setItem('fullName', pendingAdminName);
-            closeAdminPopup();
-            window.location.href = 'admin.html';
-        } catch (e) {
-            alert("حدث خطأ أثناء دخول الأدمن");
-            console.error(e);
-        }
-    }
-
     async function registerPlayer() {
         const rawName = document.getElementById('registerName').value;
         const name = normalizeName(rawName);
         const ageValue = document.getElementById('registerAge').value;
-        const isWorking = document.getElementById('registerWorking').checked;
 
         if (!name) {
             alert("يرجى إدخال الاسم الثلاثي");
@@ -445,8 +257,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fullName: name,
-                    age: age,
-                    working: isWorking
+                    age: age
                 })
             });
 
@@ -465,8 +276,6 @@
             console.error(e);
         }
     }
-
-    updateWorkingLabel();
 </script>
 
 </body>
