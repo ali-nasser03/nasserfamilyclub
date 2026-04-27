@@ -10,6 +10,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByFullName(String fullName);
 
-    // 👇 يرجع فقط اللاعبين (بدون الأدمن)
     List<User> findByRole(String role);
 }
