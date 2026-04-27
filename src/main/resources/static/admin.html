@@ -231,101 +231,212 @@
 <script>
     const slider = document.getElementById('slider');
 
-    async function load() {
-        try {
-            const res = await fetch('/api/attendance/active-list');
-            const data = await res.json();
+async function load() {
+    try {
+        const res = await fetch('/api/attendance/active-list');
+        const data = await res.json();
 
-            const yes = data.filter(p => p.status.includes('✅'));
-            const no = data.filter(p => p.status.includes('❌'));
-            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+        const yes = data.filter(p => p.status.includes('✅'));
+        const no = data.filter(p => p.status.includes('❌'));
+        const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
 
-            let voteHtml = '';
+        let voteHtml = '';
 
-            if (yes.length) {
-                voteHtml += `
-                    <div class="section-header">
-                        <span>⚽ حاضرون</span>
-                        <span>(${yes.length})</span>
-                    </div>
-                `;
-                voteHtml += yes.map(p => `
-                    <div class="row">
-                        <span>${p.name}</span>
-                        <span style="color:green;font-weight:bold;">✅</span>
-                    </div>
-                `).join('');
-            }
+        if (yes.length) {
+            voteHtml += `
+                <div class="section-header">
+                    <span>⚽ حاضرون</span>
+                    <span>(${yes.length})</span>
+                </div>
+            `;
+            voteHtml += yes.map(p => `
+                <div class="row">
+                    <span>${p.name}</span>
+                    <span style="color:green;font-weight:bold;">✅</span>
+                </div>
+            `).join('');
+        }
 
-            if (no.length) {
-                voteHtml += `
-                    <div class="section-header">
-                        <span>❌ معتذرون</span>
-                        <span>(${no.length})</span>
-                    </div>
-                `;
-                voteHtml += no.map(p => `
-                    <div class="row">
-                        <span>${p.name}</span>
-                        <span style="color:red;font-weight:bold;">❌</span>
-                    </div>
-                `).join('');
-            }
+        if (no.length) {
+            voteHtml += `
+                <div class="section-header">
+                    <span>❌ معتذرون</span>
+                    <span>(${no.length})</span>
+                </div>
+            `;
+            voteHtml += no.map(p => `
+                <div class="row">
+                    <span>${p.name}</span>
+                    <span style="color:red;font-weight:bold;">❌</span>
+                </div>
+            `).join('');
+        }
 
-            if (wait.length) {
-                voteHtml += `
-                    <div class="section-header">
-                        <span>⏳ لم يصوتوا</span>
-                        <span>(${wait.length})</span>
-                    </div>
-                `;
-                voteHtml += wait.map(p => `
-                    <div class="row">
-                        <span>${p.name}</span>
-                        <span style="color:gray;">لم يصوت</span>
-                    </div>
-                `).join('');
-            }
+        if (wait.length) {
+            voteHtml += `
+                <div class="section-header">
+                    <span>⏳ لم يصوتوا</span>
+                    <span>(${wait.length})</span>
+                </div>
+            `;
+            voteHtml += wait.map(p => `
+                <div class="row">
+                    <span>${p.name}</span>
+                    <span style="color:gray;">لم يصوت</span>
+                </div>
+            `).join('');
+        }
 
-            document.getElementById('voteList').innerHTML =
-                voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
+        document.getElementById('voteList').innerHTML =
+            voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-            const paymentSorted = [...data].sort((a, b) => {
-                const aExempt = a.paid === "معفي";
-                const bExempt = b.paid === "معفي";
+        const paymentSorted = [...data].sort((a, b) => {
+            const aExempt = a.paid === "معفي";
+            const bExempt = b.paid === "معفي";
 
-                if (aExempt && !bExempt) return 1;
-                if (!aExempt && bExempt) return -1;
-                return 0;
-            });
+            if (aExempt && !bExempt) return 1;
+            if (!aExempt && bExempt) return -1;
+            return 0;
+        });
 
-            document.getElementById('payList').innerHTML = paymentSorted.length
-                ? paymentSorted.map(p => {
-                    if (p.paid === "معفي") {
-                        return `
-                            <div class="row">
-                                <span>${p.name}</span>
-                                <span style="color:#e67e22;font-weight:bold;">معفي من الدفع</span>
-                            </div>
-                        `;
-                    }
-
+        document.getElementById('payList').innerHTML = paymentSorted.length
+            ? paymentSorted.map(p => {
+                if (p.paid === "معفي") {
                     return `
                         <div class="row">
                             <span>${p.name}</span>
-                            <label style="display:flex;align-items:center;gap:8px;">
-                                <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
-                                <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
-                            </label>
+                            <span style="color:#e67e22;font-weight:bold;">معفي من الدفع</span>
                         </div>
                     `;
-                }).join('')
-                : `<div class="empty">لا يوجد لاعبين</div>`;
+                }
 
-        } catch (e) {
-            console.error('Error loading data:', e);
+                return `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <label style="display:flex;align-items:center;gap:8px;">
+                            <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
+                            <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
+                        </label>
+                    </div>
+                `;
+            }).join('')
+            : `<div class="empty">لا يوجد لاعبين</div>`;
+
+        await loadPlayersEditor();
+
+    } catch (e) {
+        console.error('Error loading data:', e);
+    }
+}
+
+async function loadPlayersEditor() {
+    const box = document.getElementById('playersEditor');
+    if (!box) return;
+
+    const res = await fetch('/api/users/players');
+    const players = await res.json();
+
+    box.innerHTML = players.length
+        ? players.map(p => `
+            <div class="row" style="display:block;">
+                <input type="text" id="name-${p.id}" value="${p.fullName || ''}" placeholder="اسم اللاعب">
+                <input type="number" id="age-${p.id}" value="${p.age || 0}" placeholder="العمر">
+
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <input type="checkbox" id="working-${p.id}" style="width:auto;margin:0;" ${p.working ? 'checked' : ''}>
+                    <span>بشتغل</span>
+                </label>
+
+                <button class="main-btn" onclick="updatePlayer(${p.id})">حفظ التعديل</button>
+            </div>
+        `).join('')
+        : `<div class="empty">لا يوجد لاعبين</div>`;
+}
+
+async function updatePlayer(id) {
+    const fullName = document.getElementById(`name-${id}`).value.trim();
+    const age = parseInt(document.getElementById(`age-${id}`).value, 10);
+    const working = document.getElementById(`working-${id}`).checked;
+
+    if (!fullName) {
+        alert('اسم اللاعب مطلوب');
+        return;
+    }
+
+    if (isNaN(age) || age <= 0) {
+        alert('العمر غير صحيح');
+        return;
+    }
+
+    const res = await fetch(`/api/users/update/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            fullName,
+            age,
+            working
+        })
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        alert(text);
+        return;
+    }
+
+    alert('تم تعديل بيانات اللاعب');
+    load();
+}
+
+async function createNewMatch() {
+    const location = document.getElementById('loc').value;
+    const dateTime = document.getElementById('dt').value;
+
+    if (!location || !dateTime) {
+        alert('عبئ المكان والوقت أولاً');
+        return;
+    }
+
+    if (confirm('نشر المباراة الجديدة؟')) {
+        await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+
+        const res = await fetch('/api/matches/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location, dateTime, active: true })
+        });
+
+        if (res.ok) {
+            alert('تم نشر المباراة وتجهيز القائمة ⚽');
+            document.getElementById('loc').value = '';
+            document.getElementById('dt').value = '';
+            load();
+
+            slider.scrollTo({
+                left: slider.clientWidth,
+                behavior: 'smooth'
+            });
+        } else {
+            alert('حدث خطأ أثناء نشر المباراة');
         }
     }
+}
+
+async function toggle(id) {
+    await fetch(`/api/attendance/toggle-payment/${id}`, { method: 'POST' });
+    load();
+}
+
+async function resetMonth() {
+    if (confirm('هل تريد تصفير الدفع للجميع؟')) {
+        await fetch('/api/attendance/reset-month', { method: 'POST' });
+        alert('تم تصفير الدفع');
+        load();
+    }
+}
+
+window.onload = load;
 
     async function createNewMatch() {
         const location = document.getElementById('loc').value;
