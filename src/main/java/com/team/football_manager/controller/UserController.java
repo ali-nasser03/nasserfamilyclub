@@ -19,16 +19,16 @@ public class UserController {
         String inputName = creds.get("username") != null ? creds.get("username").trim() : "";
         String inputPass = creds.get("password");
 
-        // 1. تشيك الأدمن
+        // 1. فحص دخول الأدمن
         if ("admin".equalsIgnoreCase(inputName)) {
             User admin = userRepository.findByUsernameIgnoreCase("admin").orElse(null);
             if (admin != null && admin.getPassword().equals(inputPass)) {
                 return ResponseEntity.ok(admin);
             }
-            return ResponseEntity.status(401).body("كلمة سر الأدمن خطأ");
+            return ResponseEntity.status(401).body("كلمة سر الأدمن غير صحيحة");
         }
 
-        // 2. تشيك اللاعبين
+        // 2. فحص دخول اللاعبين
         Optional<User> player = userRepository.findByFullNameIgnoreCase(inputName);
         if (player.isPresent()) {
             return ResponseEntity.ok(player.get());
@@ -38,14 +38,14 @@ public class UserController {
 
     @PostMapping("/toggle-exempt/{id}")
     public ResponseEntity<?> toggleExempt(@PathVariable Long id) {
-        User u = userRepository.findById(id).orElseThrow();
-        u.setExempt(!u.isExempt());
-        userRepository.save(u);
+        User user = userRepository.findById(id).orElseThrow();
+        user.setExempt(!user.isExempt());
+        userRepository.save(user);
         return ResponseEntity.ok("Done");
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> deletePlayer(@PathVariable Long id) {
         userRepository.deleteById(id);
         return ResponseEntity.ok("Deleted");
     }
@@ -57,7 +57,10 @@ public class UserController {
             return ResponseEntity.badRequest().body("الاسم فارغ أو مسجل مسبقاً");
         
         User newUser = new User();
-        newUser.setFullName(name); newUser.setUsername(name); newUser.setRole("PLAYER"); newUser.setPassword("");
+        newUser.setFullName(name); 
+        newUser.setUsername(name); 
+        newUser.setRole("PLAYER"); 
+        newUser.setPassword("");
         userRepository.save(newUser);
         return ResponseEntity.ok("Success");
     }
