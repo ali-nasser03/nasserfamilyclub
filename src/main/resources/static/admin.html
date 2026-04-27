@@ -12,42 +12,75 @@
 <div id="payList"></div>
 
 <script>
+    async function load() {
+        try {
+            const res = await fetch('/api/attendance/active-list');
+            const data = await res.json();
+            
+            // 1. تحديث قائمة التصويت
+            const yes = data.filter(p => p.status.includes('✅'));
+            const no = data.filter(p => p.status.includes('❌'));
+            const wait = data.filter(p => p.status === 'لم يصوت');
 
-async function load(){
+            let voteHtml = '';
+            if(yes.length) voteHtml += `<div class="section-header"><span>✅ حاضرون (${yes.length})</span></div>` + yes.map(p => `<div class="row"><span>${p.name}</span><span>✅</span></div>`).join('');
+            if(no.length) voteHtml += `<div class="section-header"><span>❌ معتذرون (${no.length})</span></div>` + no.map(p => `<div class="row"><span>${p.name}</span><span>❌</span></div>`).join('');
+            if(wait.length) voteHtml += `<div class="section-header"><span>⏳ لم يصوتوا (${wait.length})</span></div>` + wait.map(p => `<div class="row"><span>${p.name}</span><span style="color:gray">لم يصوت</span></div>`).join('');
+            document.getElementById('voteList').innerHTML = voteHtml || '<div class="empty">لا يوجد لاعبين</div>';
 
-    const res = await fetch('/api/attendance/active-list');
-    const data = (await res.json()).filter(p => p.role !== "ADMIN");
+            // 2. تحديث قائمة الدفع مع فرز المعفيين في الآخر
+            const sortedPlayers = data.sort((a, b) => (a.isExempt === b.isExempt) ? 0 : a.isExempt ? 1 : -1);
+            document.getElementById('payList').innerHTML = sortedPlayers.map(p => {
+                if (p.isExempt) {
+                    return `<div class="row" style="background:#f1f2f6; border-radius:10px; margin-bottom:5px;">
+                                <span style="color:#7f8c8d">${p.name} (معفي)</span>
+                                <button onclick="toggleExempt(${p.id})" style="width:auto; padding:5px 10px; background:#95a5a6; color:white; border:none; border-radius:5px; font-size:12px;">إلغاء الإعفاء</button>
+                            </div>`;
+                } else {
+                    return `<div class="row">
+                                <span>${p.name}</span>
+                                <div style="display:flex; gap:8px;">
+                                    <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})"> ${p.paid ? '✅':'💰'}</label>
+                                    <button onclick="toggleExempt(${p.id})" style="width:auto; padding:5px 10px; background:#2980b9; color:white; border:none; border-radius:5px; font-size:12px;">إعفاء</button>
+                                    <button onclick="deletePlayer(${p.id})" style="width:auto; padding:5px 10px; background:#c0392b; color:white; border:none; border-radius:5px; font-size:12px;">حذف</button>
+                                </div>
+                            </div>`;
+                }
+            }).join('');
 
-    const paid = data.filter(p => p.paid && p.working !== false);
-    const unpaid = data.filter(p => !p.paid && p.working !== false);
-    const exempt = data.filter(p => p.working === false);
+            await loadHistory();
+        } catch (e) { console.error(e); }
+    }
 
-    let html = "";
+    async function toggle(id) { await fetch(`/api/attendance/toggle-payment/${id}`, {method:'POST'}); load(); }
+    async function toggleExempt(id) { await fetch(`/api/users/toggle-exempt/${id}`, {method:'POST'}); load(); }
+    async function deletePlayer(id) { if(confirm("حذف اللاعب نهائياً؟")){ await fetch(`/api/users/delete/${id}`, {method:'DELETE'}); load(); } }
+    async function resetMonth() { if(confirm("تصفير الدفع للجميع؟")){ await fetch('/api/attendance/reset-month', {method:'POST'}); load(); } }
+    
+    async function createNewMatch() {
+        const location = document.getElementById('loc').value;
+        const dateTime = document.getElementById('dt').value;
+        if (!location || !dateTime) return alert('أكمل البيانات');
+        await fetch('/api/attendance/reset-all-votes', {method:'POST'});
+        const res = await fetch('/api/matches/add', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({location, dateTime, active:true})
+        });
+        if(res.ok) { alert('تم نشر المباراة'); load(); }
+    }
 
-    html += "<h3>دافع</h3>";
-    html += paid.map(p => `<div>${p.name}</div>`).join('');
+    async function loadHistory() {
+        const res = await fetch('/api/attendance/history');
+        const data = await res.json();
+        let html = '';
+        Object.keys(data).forEach(k => {
+            html += `<div class="section-header"><span>${k}</span><span>(${data[k].length})</span></div>`;
+            html += data[k].map(n => `<div class="row"><span>${n}</span><span>✅</span></div>`).join('');
+        });
+        document.getElementById('historyList').innerHTML = html || '<div class="empty">لا يوجد سجل</div>';
+    }
 
-    html += "<h3>لم يدفع</h3>";
-    html += unpaid.map(p => `
-        <div>
-            ${p.name}
-            <input type="checkbox" onchange="toggle(${p.id})">
-        </div>
-    `).join('');
-
-    html += "<h3>معفي</h3>";
-    html += exempt.map(p => `<div>${p.name}</div>`).join('');
-
-    document.getElementById('payList').innerHTML = html;
-}
-
-async function toggle(id){
-    await fetch('/api/attendance/toggle-payment/'+id,{method:'POST'});
-    load();
-}
-
-load();
+    window.onload = load;
 </script>
-
 </body>
 </html>
