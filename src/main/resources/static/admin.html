@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>غرفة العمليات</title>
+
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
@@ -42,7 +45,9 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .slider::-webkit-scrollbar { display: none; }
+        .slider::-webkit-scrollbar {
+            display: none;
+        }
 
         .page {
             flex: 0 0 100%;
@@ -62,7 +67,10 @@
             margin: 0 auto;
         }
 
-        h2 { margin-top: 0; text-align: center; }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+        }
 
         input, button {
             width: 100%;
@@ -80,7 +88,10 @@
             font-weight: bold;
             cursor: pointer;
         }
-        .main-btn:hover { background: #219150; }
+
+        .main-btn:hover {
+            background: #219150;
+        }
 
         .warning-btn {
             border: none;
@@ -89,16 +100,10 @@
             font-weight: bold;
             cursor: pointer;
         }
-        .warning-btn:hover { background: #cf711d; }
 
-        .danger-btn {
-            border: none;
-            background: #e74c3c;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
+        .warning-btn:hover {
+            background: #cf711d;
         }
-        .danger-btn:hover { background: #c0392b; }
 
         .section-header {
             background: #eef3f7;
@@ -121,9 +126,15 @@
             border-bottom: 1px solid #ececec;
         }
 
-        .row:last-child { border-bottom: none; }
+        .row:last-child {
+            border-bottom: none;
+        }
 
-        .empty { text-align: center; color: #666; padding: 14px 0; }
+        .empty {
+            text-align: center;
+            color: #666;
+            padding: 14px 0;
+        }
 
         .page-indicator {
             display: flex;
@@ -133,98 +144,38 @@
         }
 
         .dot {
-            width: 10px; height: 10px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: #b8c4cc;
         }
-        .dot.active { background: #27ae60; transform: scale(1.12); }
 
-        /* بادج معفي */
-        .exempt-badge {
-            background: #8e44ad;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 0.82rem;
-            font-weight: bold;
+        .dot.active {
+            background: #27ae60;
+            transform: scale(1.12);
         }
-
-        /* modal تعديل اللاعب */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-overlay.open { display: flex; }
-
-        .modal {
-            background: white;
-            color: #2c3e50;
-            border-radius: 18px;
-            padding: 24px 20px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
-        }
-
-        .modal h3 { margin-top: 0; text-align: center; }
-
-        .modal input {
-            width: 100%;
-            padding: 11px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 12px;
-            font-size: 15px;
-        }
-
-        .modal-btns { display: flex; gap: 10px; }
-        .modal-btns button { margin-bottom: 0; }
-
-        /* toggle في المودال */
-        .emp-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #f4f6f8;
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-bottom: 14px;
-            border: 1px solid #dce1e7;
-        }
-        .emp-row span { font-weight: bold; color: #2c3e50; }
-
-        .toggle-switch { position: relative; width: 50px; height: 26px; }
-        .toggle-switch input { display: none; }
-        .toggle-slider {
-            position: absolute; inset: 0;
-            background: #ccc;
-            border-radius: 26px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .toggle-slider:before {
-            content: '';
-            position: absolute;
-            width: 20px; height: 20px;
-            background: white;
-            border-radius: 50%;
-            top: 3px; right: 3px;
-            transition: 0.3s;
-        }
-        .toggle-switch input:checked + .toggle-slider { background: #27ae60; }
-        .toggle-switch input:checked + .toggle-slider:before { right: 27px; }
 
         @media (max-width: 600px) {
-            .header { font-size: 18px; }
-            .page { padding: 12px; }
-            .card { padding: 14px; border-radius: 14px; }
-            input, button { font-size: 15px; }
-            .row { padding: 10px 6px; }
+            .header {
+                font-size: 18px;
+            }
+
+            .page {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 14px;
+                border-radius: 14px;
+            }
+
+            input, button {
+                font-size: 15px;
+            }
+
+            .row {
+                padding: 10px 6px;
+            }
         }
     </style>
 </head>
@@ -234,14 +185,13 @@
 <div class="swipe-hint">اسحب يمين أو يسار للتنقل بين الصفحات</div>
 
 <div class="slider" id="slider">
-
-    <!-- صفحة 1: مباراة جديدة -->
     <section class="page">
         <div class="card">
             <h2>🗓️ مباراة جديدة</h2>
             <input type="text" id="loc" placeholder="المكان">
             <input type="datetime-local" id="dt">
             <button class="main-btn" onclick="createNewMatch()">نشر المباراة</button>
+
             <div class="page-indicator">
                 <span class="dot active"></span>
                 <span class="dot"></span>
@@ -251,11 +201,11 @@
         </div>
     </section>
 
-    <!-- صفحة 2: قائمة التصويت -->
     <section class="page">
         <div class="card">
             <h2>🗳️ قائمة التصويت</h2>
             <div id="voteList"></div>
+
             <div class="page-indicator">
                 <span class="dot"></span>
                 <span class="dot active"></span>
@@ -265,12 +215,12 @@
         </div>
     </section>
 
-    <!-- صفحة 3: الدفع -->
     <section class="page">
         <div class="card">
             <h2>💰 الدفع</h2>
             <div id="payList"></div>
-            <button class="warning-btn" style="margin-top:14px;" onclick="resetMonth()">تصفير الدفع</button>
+            <button class="warning-btn" onclick="resetMonth()">تصفير الدفع </button>
+
             <div class="page-indicator">
                 <span class="dot"></span>
                 <span class="dot"></span>
@@ -280,11 +230,11 @@
         </div>
     </section>
 
-    <!-- صفحة 4: إدارة اللاعبين -->
     <section class="page">
         <div class="card">
-            <h2>👥 إدارة اللاعبين</h2>
-            <div id="playersMgmtList"></div>
+            <h2>📜 سجل المباريات</h2>
+            <div id="historyList"></div>
+
             <div class="page-indicator">
                 <span class="dot"></span>
                 <span class="dot"></span>
@@ -293,205 +243,153 @@
             </div>
         </div>
     </section>
-
-</div>
-
-<!-- Modal تعديل لاعب -->
-<div class="modal-overlay" id="editModal">
-    <div class="modal">
-        <h3>✏️ تعديل بيانات اللاعب</h3>
-        <input type="hidden" id="editId">
-        <input type="text"   id="editName" placeholder="الاسم الكامل">
-        <input type="number" id="editAge"  placeholder="العمر" min="1">
-        <div class="emp-row">
-            <span id="editEmpLabel">بيشتغل ✅</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="editEmpToggle">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="modal-btns">
-            <button class="main-btn"    onclick="saveEdit()">💾 حفظ</button>
-            <button class="warning-btn" onclick="closeModal()">إلغاء</button>
-        </div>
-    </div>
 </div>
 
 <script>
     const slider = document.getElementById('slider');
 
-    document.getElementById('editEmpToggle').addEventListener('change', function () {
-        document.getElementById('editEmpLabel').textContent =
-            this.checked ? 'بيشتغل ✅' : 'ما بيشتغل 🚫';
-    });
-
     async function load() {
         try {
-            const res  = await fetch('/api/attendance/active-list');
+            const res = await fetch('/api/attendance/active-list');
             const data = await res.json();
+            let filtered = data.filter(p => p.role !== "ADMIN");
 
-            // ── قائمة التصويت ──
-            const yes  = data.filter(p => p.status.includes('✅'));
-            const no   = data.filter(p => p.status.includes('❌'));
+            const yes = data.filter(p => p.status.includes('✅'));
+            const no = data.filter(p => p.status.includes('❌'));
             const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
 
             let voteHtml = '';
+
             if (yes.length) {
-                voteHtml += `<div class="section-header"><span>⚽ حاضرون</span><span>(${yes.length})</span></div>`;
-                voteHtml += yes.map(p => `<div class="row"><span>${p.name}</span><span style="color:green;font-weight:bold;">✅</span></div>`).join('');
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⚽ حاضرون</span>
+                        <span>(${yes.length})</span>
+                    </div>
+                `;
+                voteHtml += yes.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:green;font-weight:bold;">✅</span>
+                    </div>
+                `).join('');
             }
+
             if (no.length) {
-                voteHtml += `<div class="section-header"><span>❌ معتذرون</span><span>(${no.length})</span></div>`;
-                voteHtml += no.map(p => `<div class="row"><span>${p.name}</span><span style="color:red;font-weight:bold;">❌</span></div>`).join('');
+                voteHtml += `
+                    <div class="section-header">
+                        <span>❌ معتذرون</span>
+                        <span>(${no.length})</span>
+                    </div>
+                `;
+                voteHtml += no.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:red;font-weight:bold;">❌</span>
+                    </div>
+                `).join('');
             }
+
             if (wait.length) {
-                voteHtml += `<div class="section-header"><span>⏳ لم يصوتوا</span><span>(${wait.length})</span></div>`;
-                voteHtml += wait.map(p => `<div class="row"><span>${p.name}</span><span style="color:gray;">لم يصوت</span></div>`).join('');
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⏳ لم يصوتوا</span>
+                        <span>(${wait.length})</span>
+                    </div>
+                `;
+                voteHtml += wait.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:gray;">لم يصوت</span>
+                    </div>
+                `).join('');
             }
-            document.getElementById('voteList').innerHTML = voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-            // ── قائمة الدفع: العاملون أولاً، المعفيون في الأسفل بدون checkbox ──
-            const employed = data.filter(p => p.isEmployed !== false);
-            const exempt   = data.filter(p => p.isEmployed === false);
+            document.getElementById('voteList').innerHTML =
+                voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-            let payHtml = '';
-
-            if (employed.length) {
-                payHtml += employed.map(p => `
+            document.getElementById('payList').innerHTML = data.length
+                ? data.map(p => `
                     <div class="row">
                         <span>${p.name}</span>
                         <label style="display:flex;align-items:center;gap:8px;">
                             <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
-                            <span>${p.paid ? 'دافع ✅' : 'غير دافع'}</span>
+                            <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
                         </label>
                     </div>
-                `).join('');
-            }
+                `).join('')
+                : `<div class="empty">لا يوجد لاعبين</div>`;
 
-            if (exempt.length) {
-                payHtml += `<div class="section-header" style="background:#f0e6f6;color:#6c3483;">
-                    <span>🟣 معفيون من الدفع</span>
-                    <span>(${exempt.length})</span>
-                </div>`;
-                payHtml += exempt.map(p => `
-                    <div class="row">
-                        <span>${p.name}</span>
-                        <span class="exempt-badge">معفي</span>
-                    </div>
-                `).join('');
-            }
-
-            document.getElementById('payList').innerHTML =
-                payHtml || `<div class="empty">لا يوجد لاعبين</div>`;
-
-            // ── إدارة اللاعبين ──
-            await loadPlayersMgmt();
+            await loadHistory();
 
         } catch (e) {
             console.error('Error loading data:', e);
         }
     }
 
-    async function loadPlayersMgmt() {
+    async function loadHistory() {
         try {
-            const res  = await fetch('/api/users/all');
-            const players = await res.json();
+            const res = await fetch('/api/attendance/history');
+            const data = await res.json();
 
-            if (!players.length) {
-                document.getElementById('playersMgmtList').innerHTML = `<div class="empty">لا يوجد لاعبين</div>`;
+            const keys = Object.keys(data);
+
+            if (!keys.length) {
+                document.getElementById('historyList').innerHTML = `<div class="empty">لا يوجد سجل بعد</div>`;
                 return;
             }
 
-            let html = players.map(p => `
-                <div class="row">
-                    <div style="flex:1;">
-                        <div style="font-weight:bold;">${p.fullName}</div>
-                        <div style="font-size:0.82rem;color:#666;">
-                            العمر: ${p.age || '—'} &nbsp;|&nbsp;
-                            ${p.employed ? '<span style="color:#27ae60;">بيشتغل</span>' : '<span style="color:#8e44ad;font-weight:bold;">ما بيشتغل (معفي)</span>'}
-                        </div>
+            let html = '';
+            keys.forEach(matchKey => {
+                html += `
+                    <div class="section-header">
+                        <span>${matchKey}</span>
+                        <span>(${data[matchKey].length})</span>
                     </div>
-                    <div style="display:flex;gap:8px;">
-                        <button onclick="openEdit(${p.id},'${escapeQ(p.fullName)}',${p.age},${p.employed})"
-                            style="width:auto;margin:0;padding:8px 14px;background:#3498db;color:white;border:none;border-radius:10px;font-size:14px;cursor:pointer;">
-                            ✏️
-                        </button>
-                        <button onclick="deletePlayer(${p.id},'${escapeQ(p.fullName)}')"
-                            style="width:auto;margin:0;padding:8px 14px;background:#e74c3c;color:white;border:none;border-radius:10px;font-size:14px;cursor:pointer;">
-                            🗑️
-                        </button>
+                `;
+                html += data[matchKey].map(name => `
+                    <div class="row">
+                        <span>${name}</span>
+                        <span style="color:green;font-weight:bold;">✅</span>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            });
 
-            document.getElementById('playersMgmtList').innerHTML = html;
+            document.getElementById('historyList').innerHTML = html;
         } catch (e) {
-            console.error(e);
+            console.error('Error loading history:', e);
+            document.getElementById('historyList').innerHTML = `<div class="empty">تعذر تحميل السجل</div>`;
         }
-    }
-
-    function escapeQ(s) {
-        return (s || '').replace(/'/g, "\\'");
-    }
-
-    function openEdit(id, name, age, employed) {
-        document.getElementById('editId').value    = id;
-        document.getElementById('editName').value  = name;
-        document.getElementById('editAge').value   = age;
-        document.getElementById('editEmpToggle').checked = employed;
-        document.getElementById('editEmpLabel').textContent = employed ? 'بيشتغل ✅' : 'ما بيشتغل 🚫';
-        document.getElementById('editModal').classList.add('open');
-    }
-
-    function closeModal() {
-        document.getElementById('editModal').classList.remove('open');
-    }
-
-    async function saveEdit() {
-        const id         = document.getElementById('editId').value;
-        const fullName   = document.getElementById('editName').value.trim();
-        const age        = parseInt(document.getElementById('editAge').value) || 0;
-        const isEmployed = document.getElementById('editEmpToggle').checked;
-
-        if (!fullName) { alert('الاسم مطلوب'); return; }
-
-        await fetch(`/api/users/${id}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ fullName, age, isEmployed })
-        });
-
-        closeModal();
-        load();
-    }
-
-    async function deletePlayer(id, name) {
-        if (!confirm(`هل تريد حذف اللاعب "${name}"؟`)) return;
-        await fetch(`/api/users/${id}`, { method: 'DELETE' });
-        load();
     }
 
     async function createNewMatch() {
         const location = document.getElementById('loc').value;
         const dateTime = document.getElementById('dt').value;
 
-        if (!location || !dateTime) { alert('عبئ المكان والوقت أولاً'); return; }
+        if (!location || !dateTime) {
+            alert('عبئ المكان والوقت أولاً');
+            return;
+        }
 
         if (confirm('نشر المباراة الجديدة؟')) {
             await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
 
             const res = await fetch('/api/matches/add', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ location, dateTime, active: true })
             });
 
             if (res.ok) {
                 alert('تم نشر المباراة وتجهيز القائمة ⚽');
                 document.getElementById('loc').value = '';
-                document.getElementById('dt').value  = '';
+                document.getElementById('dt').value = '';
                 load();
-                slider.scrollTo({ left: slider.clientWidth, behavior: 'smooth' });
+
+                slider.scrollTo({
+                    left: slider.clientWidth,
+                    behavior: 'smooth'
+                });
             } else {
                 alert('حدث خطأ أثناء نشر المباراة');
             }
