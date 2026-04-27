@@ -1,86 +1,183 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - إدارة الفريق</title>
+    <style>
+        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.2rem; }
+        .input-group { margin-bottom: 15px; }
+        input, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: var(--secondary); }
+        .btn-green { background: var(--accent); }
+        .btn-orange { background: #f39c12; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; transition: 0.2s; }
+        .row:hover { background: #f9f9f9; }
+        .section-header { background: #ecf0f1; padding: 8px 12px; font-weight: bold; border-radius: 5px; margin: 15px 0 5px; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        .exempt-label { color: #7f8c8d; font-style: italic; font-size: 0.85rem; background: #dfe6e9; padding: 2px 8px; border-radius: 10px; }
+        .empty { text-align: center; color: #999; padding: 20px; }
+        .action-btns { display: flex; gap: 5px; align-items: center; }
+        .btn-small { width: auto; padding: 4px 8px; font-size: 0.75rem; margin: 0; }
+        .btn-del { background: var(--danger); }
+        .btn-exempt { background: #2980b9; }
+    </style>
 </head>
-
 <body>
 
-<h2>لوحة التحكم</h2>
+<div class="container">
+    <div class="card">
+        <h2>🗓️ مباراة جديدة</h2>
+        <div class="input-group">
+            <input type="text" id="loc" placeholder="المكان (مثلاً: ملاعب السلطان)">
+            <input type="datetime-local" id="dt">
+            <button onclick="createNewMatch()" class="btn-green">نشر المباراة</button>
+        </div>
+        
+        <h2>📊 قائمة التصويت</h2>
+        <div id="voteList">
+            <div class="empty">جاري تحميل البيانات...</div>
+        </div>
+    </div>
 
-<div id="payList"></div>
+    <div class="card">
+        <h2>💰 نظام الدفع</h2>
+        <button onclick="resetMonth()" class="btn-orange" style="margin-bottom: 15px;">🔄 تصفير دفع الشهر للجميع</button>
+        <div id="payList">
+            <div class="empty">جاري تحميل اللاعبين...</div>
+        </div>
+
+        <h2 style="margin-top: 30px;">📜 سجل المباريات السابقة</h2>
+        <div id="historyList"></div>
+    </div>
+</div>
 
 <script>
-    async function load() {
+    async function loadData() {
         try {
             const res = await fetch('/api/attendance/active-list');
+            if (!res.ok) throw new Error("Failed to fetch");
             const data = await res.json();
             
             // 1. تحديث قائمة التصويت
-            const yes = data.filter(p => p.status.includes('✅'));
-            const no = data.filter(p => p.status.includes('❌'));
-            const wait = data.filter(p => p.status === 'لم يصوت');
+            const yes = data.filter(p => p.status && p.status.includes('✅'));
+            const no = data.filter(p => p.status && p.status.includes('❌'));
+            const wait = data.filter(p => p.status === 'لم يصوت' || !p.status);
 
-            let voteHtml = '';
-            if(yes.length) voteHtml += `<div class="section-header"><span>✅ حاضرون (${yes.length})</span></div>` + yes.map(p => `<div class="row"><span>${p.name}</span><span>✅</span></div>`).join('');
-            if(no.length) voteHtml += `<div class="section-header"><span>❌ معتذرون (${no.length})</span></div>` + no.map(p => `<div class="row"><span>${p.name}</span><span>❌</span></div>`).join('');
-            if(wait.length) voteHtml += `<div class="section-header"><span>⏳ لم يصوتوا (${wait.length})</span></div>` + wait.map(p => `<div class="row"><span>${p.name}</span><span style="color:gray">لم يصوت</span></div>`).join('');
-            document.getElementById('voteList').innerHTML = voteHtml || '<div class="empty">لا يوجد لاعبين</div>';
+            let vHtml = '';
+            if(yes.length) vHtml += `<div class="section-header"><span>✅ حاضرون (${yes.length})</span></div>` + yes.map(p => `<div class="row"><span>${p.name}</span><span>✅</span></div>`).join('');
+            if(no.length) vHtml += `<div class="section-header"><span>❌ معتذرون (${no.length})</span></div>` + no.map(p => `<div class="row"><span>${p.name}</span><span>❌</span></div>`).join('');
+            if(wait.length) vHtml += `<div class="section-header"><span>⏳ لم يصوتوا (${wait.length})</span></div>` + wait.map(p => `<div class="row"><span>${p.name}</span><span style="color:gray">انتظار</span></div>`).join('');
+            document.getElementById('voteList').innerHTML = vHtml || '<div class="empty">لا يوجد بيانات</div>';
 
-            // 2. تحديث قائمة الدفع مع فرز المعفيين في الآخر
-            const sortedPlayers = data.sort((a, b) => (a.isExempt === b.isExempt) ? 0 : a.isExempt ? 1 : -1);
+            // 2. تحديث قائمة الدفع (المعفيين في آخر القائمة)
+            // الفرز: إذا كان a معفي و b غير معفي، b يأتي أولاً (0 - 1 = -1)
+            const sortedPlayers = data.sort((a, b) => {
+                if (a.isExempt === b.isExempt) return 0;
+                return a.isExempt ? 1 : -1;
+            });
+
             document.getElementById('payList').innerHTML = sortedPlayers.map(p => {
                 if (p.isExempt) {
-                    return `<div class="row" style="background:#f1f2f6; border-radius:10px; margin-bottom:5px;">
-                                <span style="color:#7f8c8d">${p.name} (معفي)</span>
-                                <button onclick="toggleExempt(${p.id})" style="width:auto; padding:5px 10px; background:#95a5a6; color:white; border:none; border-radius:5px; font-size:12px;">إلغاء الإعفاء</button>
-                            </div>`;
+                    // تصميم اللاعب المعفي: بدون Checkbox، مع كلمة "معفي" في الآخر
+                    return `
+                        <div class="row" style="background:#f8f9fa; border-left: 4px solid #95a5a6;">
+                            <span>${p.name}</span>
+                            <div class="action-btns">
+                                <span class="exempt-label">معفي</span>
+                                <button onclick="toggleExempt(${p.id})" class="btn-small btn-exempt">إلغاء الإعفاء</button>
+                            </div>
+                        </div>`;
                 } else {
-                    return `<div class="row">
-                                <span>${p.name}</span>
-                                <div style="display:flex; gap:8px;">
-                                    <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})"> ${p.paid ? '✅':'💰'}</label>
-                                    <button onclick="toggleExempt(${p.id})" style="width:auto; padding:5px 10px; background:#2980b9; color:white; border:none; border-radius:5px; font-size:12px;">إعفاء</button>
-                                    <button onclick="deletePlayer(${p.id})" style="width:auto; padding:5px 10px; background:#c0392b; color:white; border:none; border-radius:5px; font-size:12px;">حذف</button>
-                                </div>
-                            </div>`;
+                    // تصميم اللاعب العادي: يوجد Checkbox
+                    return `
+                        <div class="row">
+                            <span>${p.name}</span>
+                            <div class="action-btns">
+                                <label style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;">
+                                    <input type="checkbox" style="width:auto; margin:0;" ${p.paid ? 'checked' : ''} onchange="togglePayment(${p.id})">
+                                    ${p.paid ? 'مدفوع' : 'لم يدفع'}
+                                </label>
+                                <button onclick="toggleExempt(${p.id})" class="btn-small btn-exempt">إعفاء</button>
+                                <button onclick="deletePlayer(${p.id})" class="btn-small btn-del">حذف</button>
+                            </div>
+                        </div>`;
                 }
             }).join('');
 
-            await loadHistory();
-        } catch (e) { console.error(e); }
+            loadHistory();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('voteList').innerHTML = '<div class="empty" style="color:red">خطأ في الاتصال بالسيرفر</div>';
+        }
     }
 
-    async function toggle(id) { await fetch(`/api/attendance/toggle-payment/${id}`, {method:'POST'}); load(); }
-    async function toggleExempt(id) { await fetch(`/api/users/toggle-exempt/${id}`, {method:'POST'}); load(); }
-    async function deletePlayer(id) { if(confirm("حذف اللاعب نهائياً؟")){ await fetch(`/api/users/delete/${id}`, {method:'DELETE'}); load(); } }
-    async function resetMonth() { if(confirm("تصفير الدفع للجميع؟")){ await fetch('/api/attendance/reset-month', {method:'POST'}); load(); } }
-    
+    async function togglePayment(id) {
+        await fetch(`/api/attendance/toggle-payment/${id}`, {method: 'POST'});
+        loadData();
+    }
+
+    async function toggleExempt(id) {
+        await fetch(`/api/users/toggle-exempt/${id}`, {method: 'POST'});
+        loadData();
+    }
+
+    async function deletePlayer(id) {
+        if (confirm("هل أنت متأكد من حذف هذا اللاعب نهائياً؟")) {
+            await fetch(`/api/users/delete/${id}`, {method: 'DELETE'});
+            loadData();
+        }
+    }
+
+    async function resetMonth() {
+        if (confirm("سيتم تصفير حالة الدفع لجميع اللاعبين، هل أنت متأكد؟")) {
+            await fetch('/api/attendance/reset-month', {method: 'POST'});
+            loadData();
+        }
+    }
+
     async function createNewMatch() {
         const location = document.getElementById('loc').value;
         const dateTime = document.getElementById('dt').value;
-        if (!location || !dateTime) return alert('أكمل البيانات');
-        await fetch('/api/attendance/reset-all-votes', {method:'POST'});
+        if (!location || !dateTime) return alert('يرجى إدخال المكان والزمان');
+        
+        // تصفير التصويت للمباراة الجديدة
+        await fetch('/api/attendance/reset-all-votes', {method: 'POST'});
+        
         const res = await fetch('/api/matches/add', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({location, dateTime, active:true})
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ location, dateTime, active: true })
         });
-        if(res.ok) { alert('تم نشر المباراة'); load(); }
+
+        if (res.ok) {
+            alert('تم نشر المباراة بنجاح');
+            document.getElementById('loc').value = '';
+            document.getElementById('dt').value = '';
+            loadData();
+        }
     }
 
     async function loadHistory() {
         const res = await fetch('/api/attendance/history');
         const data = await res.json();
         let html = '';
-        Object.keys(data).forEach(k => {
-            html += `<div class="section-header"><span>${k}</span><span>(${data[k].length})</span></div>`;
-            html += data[k].map(n => `<div class="row"><span>${n}</span><span>✅</span></div>`).join('');
+        Object.keys(data).forEach(matchName => {
+            html += `<div class="section-header"><span>${matchName}</span></div>`;
+            html += data[matchName].map(name => `<div class="row"><span>${name}</span><span>✅</span></div>`).join('');
         });
-        document.getElementById('historyList').innerHTML = html || '<div class="empty">لا يوجد سجل</div>';
+        document.getElementById('historyList').innerHTML = html;
     }
 
-    window.onload = load;
+    // التحميل الأولي والتحميل التلقائي كل 30 ثانية
+    window.onload = loadData;
+    setInterval(loadData, 30000);
 </script>
+
 </body>
 </html>
