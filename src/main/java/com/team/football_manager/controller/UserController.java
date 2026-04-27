@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,11 +16,16 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    // 🔥 تسجيل لاعب
     @PostMapping("/register")
     public ResponseEntity<?> registerPlayer(@RequestBody User user) {
         try {
-            String fullName = user.getFullName().trim().replaceAll("\\s+", " ");
+            String fullName = user.getFullName() != null
+                    ? user.getFullName().trim().replaceAll("\\s+", " ")
+                    : "";
+
+            if (fullName.isEmpty()) {
+                return ResponseEntity.badRequest().body("الاسم مطلوب");
+            }
 
             if (userRepository.findByFullName(fullName).isPresent()) {
                 return ResponseEntity.badRequest().body("اللاعب مسجل مسبقًا");
@@ -40,70 +44,73 @@ public class UserController {
             return ResponseEntity.ok("تم التسجيل");
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("فشل التسجيل");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("فشل التسجيل: " + e.getMessage());
         }
     }
 
-    // 🔥 تحقق من وجود لاعب
     @GetMapping("/check")
     public String checkPlayer(@RequestParam String name) {
-        return userRepository.findByFullName(name.trim())
-                .isPresent() ? "FOUND" : "NOT_FOUND";
+        String cleanedName = name == null ? "" : name.trim().replaceAll("\\s+", " ");
+
+        if (cleanedName.isEmpty()) {
+            return "NOT_FOUND";
+        }
+
+        return userRepository.findByFullName(cleanedName).isPresent() ? "FOUND" : "NOT_FOUND";
     }
 
-    // 🔥 دخول الأدمن
     @PostMapping("/admin-login")
     public String adminLogin(@RequestBody Map<String, String> body) {
-
-        String name = body.get("fullName");
+        String fullName = body.get("fullName");
         String password = body.get("password");
 
-        User user = userRepository.findByFullName(name).orElse(null);
+        if (fullName == null || password == null) {
+            return "FAIL";
+        }
+
+        User user = userRepository.findByFullName(fullName.trim()).orElse(null);
 
         if (user == null) return "FAIL";
-        if (!"ADMIN".equals(user.getRole())) return "FAIL";
+        if (!"ADMIN".equalsIgnoreCase(user.getRole())) return "FAIL";
 
-        return user.getPassword().equals(password) ? "SUCCESS" : "FAIL";
+        String savedPassword = user.getPassword() == null ? "" : user.getPassword();
+
+        return savedPassword.equals(password) ? "SUCCESS" : "FAIL";
     }
 
-    // 🔥 أهم API — يرجع فقط اللاعبين
     @GetMapping("/players")
     public List<User> getPlayersOnly() {
         return userRepository.findByRole("PLAYER");
     }
 
-    @GetMapping("/players")
-public List<User> getPlayersOnly() {
-    return userRepository.findByRole("PLAYER");
-}
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updatePlayer(@PathVariable Long id, @RequestBody User updatedUser) {
+        User user = userRepository.findById(id).orElse(null);
 
-@PutMapping("/update/{id}")
-public ResponseEntity<?> updatePlayer(@PathVariable Long id, @RequestBody User updatedUser) {
-    User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body("اللاعب غير موجود");
+        }
 
-    if (user == null) {
-        return ResponseEntity.badRequest().body("اللاعب غير موجود");
+        if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+            return ResponseEntity.badRequest().body("لا يمكن تعديل الأدمن من هنا");
+        }
+
+        String fullName = updatedUser.getFullName() != null
+                ? updatedUser.getFullName().trim().replaceAll("\\s+", " ")
+                : "";
+
+        if (fullName.isEmpty()) {
+            return ResponseEntity.badRequest().body("الاسم مطلوب");
+        }
+
+        user.setFullName(fullName);
+        user.setUsername(fullName);
+        user.setAge(updatedUser.getAge());
+        user.setWorking(updatedUser.isWorking());
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok("تم التعديل");
     }
-
-    if ("ADMIN".equalsIgnoreCase(user.getRole())) {
-        return ResponseEntity.badRequest().body("لا يمكن تعديل الأدمن من هنا");
-    }
-
-    String fullName = updatedUser.getFullName() != null
-            ? updatedUser.getFullName().trim().replaceAll("\\s+", " ")
-            : "";
-
-    if (fullName.isEmpty()) {
-        return ResponseEntity.badRequest().body("الاسم مطلوب");
-    }
-
-    user.setFullName(fullName);
-    user.setUsername(fullName);
-    user.setAge(updatedUser.getAge());
-    user.setWorking(updatedUser.isWorking());
-
-    userRepository.save(user);
-
-    return ResponseEntity.ok("تم التعديل");
-}
 }
