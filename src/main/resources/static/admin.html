@@ -3,180 +3,515 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - إدارة الفريق</title>
+    <title>غرفة العمليات</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.2rem; }
-        .input-group { margin-bottom: 15px; }
-        input, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
-        button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: var(--secondary); }
-        .btn-green { background: var(--accent); }
-        .btn-orange { background: #f39c12; }
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; transition: 0.2s; }
-        .row:hover { background: #f9f9f9; }
-        .section-header { background: #ecf0f1; padding: 8px 12px; font-weight: bold; border-radius: 5px; margin: 15px 0 5px; font-size: 0.9rem; display: flex; justify-content: space-between; }
-        .exempt-label { color: #7f8c8d; font-style: italic; font-size: 0.85rem; background: #dfe6e9; padding: 2px 8px; border-radius: 10px; }
-        .empty { text-align: center; color: #999; padding: 20px; }
-        .action-btns { display: flex; gap: 5px; align-items: center; }
-        .btn-small { width: auto; padding: 4px 8px; font-size: 0.75rem; margin: 0; }
-        .btn-del { background: var(--danger); }
-        .btn-exempt { background: #2980b9; }
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2c3e50;
+            color: white;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 14px 12px;
+            background: #1f2d3a;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .swipe-hint {
+            text-align: center;
+            padding: 8px 12px;
+            background: #243544;
+            font-size: 14px;
+            color: #dfe6ec;
+        }
+
+        .slider {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 86px);
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .slider::-webkit-scrollbar { display: none; }
+
+        .page {
+            flex: 0 0 100%;
+            width: 100%;
+            scroll-snap-align: start;
+            overflow-y: auto;
+            padding: 18px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.96);
+            color: #2c3e50;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h2 { margin-top: 0; text-align: center; }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #d8d8d8;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .main-btn {
+            border: none;
+            background: #27ae60;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .main-btn:hover { background: #219150; }
+
+        .warning-btn {
+            border: none;
+            background: #e67e22;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .warning-btn:hover { background: #cf711d; }
+
+        .danger-btn {
+            border: none;
+            background: #e74c3c;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .danger-btn:hover { background: #c0392b; }
+
+        .section-header {
+            background: #eef3f7;
+            color: #2c3e50;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin: 14px 0 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 10px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .row:last-child { border-bottom: none; }
+
+        .empty { text-align: center; color: #666; padding: 14px 0; }
+
+        .page-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #b8c4cc;
+        }
+        .dot.active { background: #27ae60; transform: scale(1.12); }
+
+        /* بادج معفي */
+        .exempt-badge {
+            background: #8e44ad;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        /* modal تعديل اللاعب */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: white;
+            color: #2c3e50;
+            border-radius: 18px;
+            padding: 24px 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal h3 { margin-top: 0; text-align: center; }
+
+        .modal input {
+            width: 100%;
+            padding: 11px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btns button { margin-bottom: 0; }
+
+        /* toggle في المودال */
+        .emp-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f4f6f8;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            border: 1px solid #dce1e7;
+        }
+        .emp-row span { font-weight: bold; color: #2c3e50; }
+
+        .toggle-switch { position: relative; width: 50px; height: 26px; }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute; inset: 0;
+            background: #ccc;
+            border-radius: 26px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .toggle-slider:before {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 3px; right: 3px;
+            transition: 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: #27ae60; }
+        .toggle-switch input:checked + .toggle-slider:before { right: 27px; }
+
+        @media (max-width: 600px) {
+            .header { font-size: 18px; }
+            .page { padding: 12px; }
+            .card { padding: 14px; border-radius: 14px; }
+            input, button { font-size: 15px; }
+            .row { padding: 10px 6px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <h2>🗓️ مباراة جديدة</h2>
-        <div class="input-group">
-            <input type="text" id="loc" placeholder="المكان (مثلاً: ملاعب السلطان)">
+<div class="header">غرفة العمليات</div>
+<div class="swipe-hint">اسحب يمين أو يسار للتنقل بين الصفحات</div>
+
+<div class="slider" id="slider">
+
+    <!-- صفحة 1: مباراة جديدة -->
+    <section class="page">
+        <div class="card">
+            <h2>🗓️ مباراة جديدة</h2>
+            <input type="text" id="loc" placeholder="المكان">
             <input type="datetime-local" id="dt">
-            <button onclick="createNewMatch()" class="btn-green">نشر المباراة</button>
+            <button class="main-btn" onclick="createNewMatch()">نشر المباراة</button>
+            <div class="page-indicator">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
         </div>
-        
-        <h2>📊 قائمة التصويت</h2>
-        <div id="voteList">
-            <div class="empty">جاري تحميل البيانات...</div>
-        </div>
-    </div>
+    </section>
 
-    <div class="card">
-        <h2>💰 نظام الدفع</h2>
-        <button onclick="resetMonth()" class="btn-orange" style="margin-bottom: 15px;">🔄 تصفير دفع الشهر للجميع</button>
-        <div id="payList">
-            <div class="empty">جاري تحميل اللاعبين...</div>
+    <!-- صفحة 2: قائمة التصويت -->
+    <section class="page">
+        <div class="card">
+            <h2>🗳️ قائمة التصويت</h2>
+            <div id="voteList"></div>
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
         </div>
+    </section>
 
-        <h2 style="margin-top: 30px;">📜 سجل المباريات السابقة</h2>
-        <div id="historyList"></div>
+    <!-- صفحة 3: الدفع -->
+    <section class="page">
+        <div class="card">
+            <h2>💰 الدفع</h2>
+            <div id="payList"></div>
+            <button class="warning-btn" style="margin-top:14px;" onclick="resetMonth()">تصفير الدفع</button>
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot active"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- صفحة 4: إدارة اللاعبين -->
+    <section class="page">
+        <div class="card">
+            <h2>👥 إدارة اللاعبين</h2>
+            <div id="playersMgmtList"></div>
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot active"></span>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- Modal تعديل لاعب -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <h3>✏️ تعديل بيانات اللاعب</h3>
+        <input type="hidden" id="editId">
+        <input type="text"   id="editName" placeholder="الاسم الكامل">
+        <input type="number" id="editAge"  placeholder="العمر" min="1">
+        <div class="emp-row">
+            <span id="editEmpLabel">بيشتغل ✅</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="editEmpToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="modal-btns">
+            <button class="main-btn"    onclick="saveEdit()">💾 حفظ</button>
+            <button class="warning-btn" onclick="closeModal()">إلغاء</button>
+        </div>
     </div>
 </div>
 
 <script>
-    async function loadData() {
+    const slider = document.getElementById('slider');
+
+    document.getElementById('editEmpToggle').addEventListener('change', function () {
+        document.getElementById('editEmpLabel').textContent =
+            this.checked ? 'بيشتغل ✅' : 'ما بيشتغل 🚫';
+    });
+
+    async function load() {
         try {
-            const res = await fetch('/api/attendance/active-list');
-            if (!res.ok) throw new Error("Failed to fetch");
+            const res  = await fetch('/api/attendance/active-list');
             const data = await res.json();
-            
-            // 1. تحديث قائمة التصويت
-            const yes = data.filter(p => p.status && p.status.includes('✅'));
-            const no = data.filter(p => p.status && p.status.includes('❌'));
-            const wait = data.filter(p => p.status === 'لم يصوت' || !p.status);
 
-            let vHtml = '';
-            if(yes.length) vHtml += `<div class="section-header"><span>✅ حاضرون (${yes.length})</span></div>` + yes.map(p => `<div class="row"><span>${p.name}</span><span>✅</span></div>`).join('');
-            if(no.length) vHtml += `<div class="section-header"><span>❌ معتذرون (${no.length})</span></div>` + no.map(p => `<div class="row"><span>${p.name}</span><span>❌</span></div>`).join('');
-            if(wait.length) vHtml += `<div class="section-header"><span>⏳ لم يصوتوا (${wait.length})</span></div>` + wait.map(p => `<div class="row"><span>${p.name}</span><span style="color:gray">انتظار</span></div>`).join('');
-            document.getElementById('voteList').innerHTML = vHtml || '<div class="empty">لا يوجد بيانات</div>';
+            // ── قائمة التصويت ──
+            const yes  = data.filter(p => p.status.includes('✅'));
+            const no   = data.filter(p => p.status.includes('❌'));
+            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
 
-            // 2. تحديث قائمة الدفع (المعفيين في آخر القائمة)
-            // الفرز: إذا كان a معفي و b غير معفي، b يأتي أولاً (0 - 1 = -1)
-            const sortedPlayers = data.sort((a, b) => {
-                if (a.isExempt === b.isExempt) return 0;
-                return a.isExempt ? 1 : -1;
-            });
+            let voteHtml = '';
+            if (yes.length) {
+                voteHtml += `<div class="section-header"><span>⚽ حاضرون</span><span>(${yes.length})</span></div>`;
+                voteHtml += yes.map(p => `<div class="row"><span>${p.name}</span><span style="color:green;font-weight:bold;">✅</span></div>`).join('');
+            }
+            if (no.length) {
+                voteHtml += `<div class="section-header"><span>❌ معتذرون</span><span>(${no.length})</span></div>`;
+                voteHtml += no.map(p => `<div class="row"><span>${p.name}</span><span style="color:red;font-weight:bold;">❌</span></div>`).join('');
+            }
+            if (wait.length) {
+                voteHtml += `<div class="section-header"><span>⏳ لم يصوتوا</span><span>(${wait.length})</span></div>`;
+                voteHtml += wait.map(p => `<div class="row"><span>${p.name}</span><span style="color:gray;">لم يصوت</span></div>`).join('');
+            }
+            document.getElementById('voteList').innerHTML = voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-            document.getElementById('payList').innerHTML = sortedPlayers.map(p => {
-                if (p.isExempt) {
-                    // تصميم اللاعب المعفي: بدون Checkbox، مع كلمة "معفي" في الآخر
-                    return `
-                        <div class="row" style="background:#f8f9fa; border-left: 4px solid #95a5a6;">
-                            <span>${p.name}</span>
-                            <div class="action-btns">
-                                <span class="exempt-label">معفي</span>
-                                <button onclick="toggleExempt(${p.id})" class="btn-small btn-exempt">إلغاء الإعفاء</button>
-                            </div>
-                        </div>`;
-                } else {
-                    // تصميم اللاعب العادي: يوجد Checkbox
-                    return `
-                        <div class="row">
-                            <span>${p.name}</span>
-                            <div class="action-btns">
-                                <label style="display:flex; align-items:center; gap:5px; font-size:0.8rem; cursor:pointer;">
-                                    <input type="checkbox" style="width:auto; margin:0;" ${p.paid ? 'checked' : ''} onchange="togglePayment(${p.id})">
-                                    ${p.paid ? 'مدفوع' : 'لم يدفع'}
-                                </label>
-                                <button onclick="toggleExempt(${p.id})" class="btn-small btn-exempt">إعفاء</button>
-                                <button onclick="deletePlayer(${p.id})" class="btn-small btn-del">حذف</button>
-                            </div>
-                        </div>`;
-                }
-            }).join('');
+            // ── قائمة الدفع: العاملون أولاً، المعفيون في الأسفل بدون checkbox ──
+            const employed = data.filter(p => p.isEmployed !== false);
+            const exempt   = data.filter(p => p.isEmployed === false);
 
-            loadHistory();
+            let payHtml = '';
+
+            if (employed.length) {
+                payHtml += employed.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <label style="display:flex;align-items:center;gap:8px;">
+                            <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
+                            <span>${p.paid ? 'دافع ✅' : 'غير دافع'}</span>
+                        </label>
+                    </div>
+                `).join('');
+            }
+
+            if (exempt.length) {
+                payHtml += `<div class="section-header" style="background:#f0e6f6;color:#6c3483;">
+                    <span>🟣 معفيون من الدفع</span>
+                    <span>(${exempt.length})</span>
+                </div>`;
+                payHtml += exempt.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span class="exempt-badge">معفي</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('payList').innerHTML =
+                payHtml || `<div class="empty">لا يوجد لاعبين</div>`;
+
+            // ── إدارة اللاعبين ──
+            await loadPlayersMgmt();
+
+        } catch (e) {
+            console.error('Error loading data:', e);
+        }
+    }
+
+    async function loadPlayersMgmt() {
+        try {
+            const res  = await fetch('/api/users/all');
+            const players = await res.json();
+
+            if (!players.length) {
+                document.getElementById('playersMgmtList').innerHTML = `<div class="empty">لا يوجد لاعبين</div>`;
+                return;
+            }
+
+            let html = players.map(p => `
+                <div class="row">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;">${p.fullName}</div>
+                        <div style="font-size:0.82rem;color:#666;">
+                            العمر: ${p.age || '—'} &nbsp;|&nbsp;
+                            ${p.employed ? '<span style="color:#27ae60;">بيشتغل</span>' : '<span style="color:#8e44ad;font-weight:bold;">ما بيشتغل (معفي)</span>'}
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="openEdit(${p.id},'${escapeQ(p.fullName)}',${p.age},${p.employed})"
+                            style="width:auto;margin:0;padding:8px 14px;background:#3498db;color:white;border:none;border-radius:10px;font-size:14px;cursor:pointer;">
+                            ✏️
+                        </button>
+                        <button onclick="deletePlayer(${p.id},'${escapeQ(p.fullName)}')"
+                            style="width:auto;margin:0;padding:8px 14px;background:#e74c3c;color:white;border:none;border-radius:10px;font-size:14px;cursor:pointer;">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('playersMgmtList').innerHTML = html;
         } catch (e) {
             console.error(e);
-            document.getElementById('voteList').innerHTML = '<div class="empty" style="color:red">خطأ في الاتصال بالسيرفر</div>';
         }
     }
 
-    async function togglePayment(id) {
-        await fetch(`/api/attendance/toggle-payment/${id}`, {method: 'POST'});
-        loadData();
+    function escapeQ(s) {
+        return (s || '').replace(/'/g, "\\'");
     }
 
-    async function toggleExempt(id) {
-        await fetch(`/api/users/toggle-exempt/${id}`, {method: 'POST'});
-        loadData();
+    function openEdit(id, name, age, employed) {
+        document.getElementById('editId').value    = id;
+        document.getElementById('editName').value  = name;
+        document.getElementById('editAge').value   = age;
+        document.getElementById('editEmpToggle').checked = employed;
+        document.getElementById('editEmpLabel').textContent = employed ? 'بيشتغل ✅' : 'ما بيشتغل 🚫';
+        document.getElementById('editModal').classList.add('open');
     }
 
-    async function deletePlayer(id) {
-        if (confirm("هل أنت متأكد من حذف هذا اللاعب نهائياً؟")) {
-            await fetch(`/api/users/delete/${id}`, {method: 'DELETE'});
-            loadData();
-        }
+    function closeModal() {
+        document.getElementById('editModal').classList.remove('open');
     }
 
-    async function resetMonth() {
-        if (confirm("سيتم تصفير حالة الدفع لجميع اللاعبين، هل أنت متأكد؟")) {
-            await fetch('/api/attendance/reset-month', {method: 'POST'});
-            loadData();
-        }
+    async function saveEdit() {
+        const id         = document.getElementById('editId').value;
+        const fullName   = document.getElementById('editName').value.trim();
+        const age        = parseInt(document.getElementById('editAge').value) || 0;
+        const isEmployed = document.getElementById('editEmpToggle').checked;
+
+        if (!fullName) { alert('الاسم مطلوب'); return; }
+
+        await fetch(`/api/users/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fullName, age, isEmployed })
+        });
+
+        closeModal();
+        load();
+    }
+
+    async function deletePlayer(id, name) {
+        if (!confirm(`هل تريد حذف اللاعب "${name}"؟`)) return;
+        await fetch(`/api/users/${id}`, { method: 'DELETE' });
+        load();
     }
 
     async function createNewMatch() {
         const location = document.getElementById('loc').value;
         const dateTime = document.getElementById('dt').value;
-        if (!location || !dateTime) return alert('يرجى إدخال المكان والزمان');
-        
-        // تصفير التصويت للمباراة الجديدة
-        await fetch('/api/attendance/reset-all-votes', {method: 'POST'});
-        
-        const res = await fetch('/api/matches/add', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ location, dateTime, active: true })
-        });
 
-        if (res.ok) {
-            alert('تم نشر المباراة بنجاح');
-            document.getElementById('loc').value = '';
-            document.getElementById('dt').value = '';
-            loadData();
+        if (!location || !dateTime) { alert('عبئ المكان والوقت أولاً'); return; }
+
+        if (confirm('نشر المباراة الجديدة؟')) {
+            await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+
+            const res = await fetch('/api/matches/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ location, dateTime, active: true })
+            });
+
+            if (res.ok) {
+                alert('تم نشر المباراة وتجهيز القائمة ⚽');
+                document.getElementById('loc').value = '';
+                document.getElementById('dt').value  = '';
+                load();
+                slider.scrollTo({ left: slider.clientWidth, behavior: 'smooth' });
+            } else {
+                alert('حدث خطأ أثناء نشر المباراة');
+            }
         }
     }
 
-    async function loadHistory() {
-        const res = await fetch('/api/attendance/history');
-        const data = await res.json();
-        let html = '';
-        Object.keys(data).forEach(matchName => {
-            html += `<div class="section-header"><span>${matchName}</span></div>`;
-            html += data[matchName].map(name => `<div class="row"><span>${name}</span><span>✅</span></div>`).join('');
-        });
-        document.getElementById('historyList').innerHTML = html;
+    async function toggle(id) {
+        await fetch(`/api/attendance/toggle-payment/${id}`, { method: 'POST' });
+        load();
     }
 
-    // التحميل الأولي والتحميل التلقائي كل 30 ثانية
-    window.onload = loadData;
-    setInterval(loadData, 30000);
+    async function resetMonth() {
+        if (confirm('هل تريد تصفير الدفع للجميع؟')) {
+            await fetch('/api/attendance/reset-month', { method: 'POST' });
+            alert('تم تصفير الدفع');
+            load();
+        }
+    }
+
+    window.onload = load;
 </script>
 
 </body>
