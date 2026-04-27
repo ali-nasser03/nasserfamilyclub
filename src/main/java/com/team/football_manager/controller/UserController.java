@@ -32,6 +32,7 @@ public class UserController {
     public ResponseEntity<?> register(@RequestBody User user) {
         String name = user.getFullName() != null ? user.getFullName().trim() : "";
         if (name.isEmpty() || userRepository.findByFullName(name).isPresent()) return ResponseEntity.badRequest().body("Error");
+        
         User newUser = new User();
         newUser.setFullName(name); newUser.setUsername(name); newUser.setRole("PLAYER"); newUser.setPassword("");
         userRepository.save(newUser);
