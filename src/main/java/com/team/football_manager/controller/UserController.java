@@ -21,6 +21,35 @@ public class UserController {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody Map<String, String> data) {
+        String name = data.get("name") != null
+                ? data.get("name").trim().replaceAll("\\s+", " ")
+                : "";
+
+        String password = data.get("password") != null
+                ? data.get("password")
+                : "";
+
+        Optional<User> optionalUser = userRepository.findByFullName(name);
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(401).body("NOT_FOUND");
+        }
+
+        User user = optionalUser.get();
+
+        if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+            if (user.getPassword() != null && user.getPassword().equals(password)) {
+                return ResponseEntity.ok("ADMIN");
+            }
+
+            return ResponseEntity.status(401).body("WRONG_PASSWORD");
+        }
+
+        return ResponseEntity.ok("PLAYER");
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> registerPlayer(@RequestBody User user) {
         try {
