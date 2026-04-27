@@ -125,6 +125,27 @@
             display: block;
         }
 
+        .admin-password-box {
+            display: none;
+            margin-top: 12px;
+            padding: 18px;
+            border: 1px solid #d8d8d8;
+            border-radius: 18px;
+            background: #f8f9fa;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.04);
+        }
+
+        .admin-password-box.active {
+            display: block;
+        }
+
+        .admin-password-title {
+            margin: 0 0 12px;
+            color: #111;
+            font-weight: bold;
+            font-size: 1.05rem;
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 12px;
@@ -174,6 +195,13 @@
         <button class="btn btn-register" onclick="showRegisterForm()">تسجيل لاعب جديد</button>
     </div>
 
+    <div id="adminPasswordBox" class="admin-password-box">
+        <div class="admin-password-title">كلمة سر الأدمن</div>
+        <input type="password" id="adminPassword" placeholder="أدخل كلمة السر">
+        <button class="btn btn-confirm" onclick="adminLogin()">دخول الأدمن</button>
+        <button class="btn btn-cancel" onclick="hideAdminPasswordBox()">إلغاء</button>
+    </div>
+
     <div id="registerSection" class="register-box">
         <input type="text" id="registerName" placeholder="أدخل الاسم الثلاثي">
         <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
@@ -183,11 +211,14 @@
 </div>
 
 <script>
+    let pendingAdminName = "";
+
     function normalizeName(name) {
         return name.trim().replace(/\s+/g, ' ');
     }
 
     function showRegisterForm() {
+        hideAdminPasswordBox();
         document.getElementById('registerSection').classList.add('active');
     }
 
@@ -195,6 +226,20 @@
         document.getElementById('registerSection').classList.remove('active');
         document.getElementById('registerName').value = "";
         document.getElementById('registerAge').value = "";
+    }
+
+    function showAdminPasswordBox(name) {
+        hideRegisterForm();
+        pendingAdminName = name;
+        document.getElementById('adminPasswordBox').classList.add('active');
+        document.getElementById('adminPassword').value = "";
+        document.getElementById('adminPassword').focus();
+    }
+
+    function hideAdminPasswordBox() {
+        pendingAdminName = "";
+        document.getElementById('adminPasswordBox').classList.remove('active');
+        document.getElementById('adminPassword').value = "";
     }
 
     async function login() {
@@ -207,8 +252,7 @@
         }
 
         if (name === "Admin" || name === "محمود ناصر") {
-            localStorage.setItem('fullName', name);
-            window.location.href = 'admin.html';
+            showAdminPasswordBox(name);
             return;
         }
 
@@ -225,6 +269,40 @@
             window.location.href = 'player.html';
         } catch (e) {
             alert("حدث خطأ أثناء تسجيل الدخول");
+            console.error(e);
+        }
+    }
+
+    async function adminLogin() {
+        const password = document.getElementById('adminPassword').value;
+
+        if (!password) {
+            alert("يرجى إدخال كلمة السر");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: pendingAdminName,
+                    password: password
+                })
+            });
+
+            const text = await res.text();
+
+            if (!res.ok || text !== "ADMIN") {
+                alert("كلمة السر غير صحيحة");
+                return;
+            }
+
+            localStorage.setItem('fullName', pendingAdminName);
+            window.location.href = 'admin.html';
+
+        } catch (e) {
+            alert("حدث خطأ أثناء دخول الأدمن");
             console.error(e);
         }
     }
@@ -257,7 +335,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fullName: name,
-                    age: age
+                    age: age,
+                    working: true
                 })
             });
 
