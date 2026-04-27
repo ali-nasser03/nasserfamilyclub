@@ -27,152 +27,59 @@
 <tbody id="pBody"></tbody>
 </table>
 
+<!-- 🔴 لا تعدل التصميم، فقط انسخ -->
+
 <script>
-    document.getElementById('pName').innerText = "كابتن " + fullName;
-    document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
+function isAdmin(p){ return p.role === "ADMIN"; }
+function isExempt(p){ return p.working === false; }
 
-    function isAdmin(p) {
-        return p.role && p.role.toUpperCase() === "ADMIN";
+async function update() {
+
+    const mRes = await fetch('/api/matches/latest');
+    let m = mRes.ok ? await mRes.json() : null;
+
+    if (!m || !m.active) {
+        document.getElementById('mInfo').innerHTML =
+            "<span style='color:#c0392b'>🚫 لم يتم نشر مباراة</span>";
+    } else {
+        document.getElementById('mInfo').innerHTML =
+            `📍 ${m.location}<br>⏰ ${m.dateTime.replace("T"," ")}`;
     }
 
-    function isExempt(p) {
-        return p.exempt === true || p.working === false;
-    }
+    const res = await fetch('/api/attendance/active-list');
+    const data = (await res.json()).filter(p => !isAdmin(p));
 
-    function safeStatus(p) {
-        return p.status || "";
-    }
+    const me = data.find(p => p.name === fullName);
 
-    async function update() {
-        try {
-            const mRes = await fetch('/api/matches/latest');
-
-            let m = null;
-            if (mRes.ok) {
-                try { m = await mRes.json(); } catch { m = null; }
-            }
-
-            const yesBtn = document.getElementById('yesBtn');
-            const noBtn = document.getElementById('noBtn');
-            const clearBtn = document.getElementById('clearBtn');
-
-            if (!m || !m.active) {
-                document.getElementById('mInfo').innerHTML =
-                    "<span style='color:#c0392b;font-weight:bold'>🚫 لم يتم نشر المباراة بعد</span>";
-                yesBtn.disabled = true;
-                noBtn.disabled = true;
-                clearBtn.disabled = true;
-            } else {
-                document.getElementById('mInfo').innerHTML =
-                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}`;
-                yesBtn.disabled = false;
-                noBtn.disabled = false;
-                clearBtn.disabled = false;
-            }
-
-            const res = await fetch('/api/attendance/active-list');
-            const rawData = await res.json();
-            const data = rawData.filter(p => !isAdmin(p));
-
-            const me = data.find(p => p.name === fullName);
-
-            if (me) {
-                if (isExempt(me)) {
-                    document.getElementById('myStatus').innerHTML =
-                        "<span style='color:orange'>🟡 حالة دفعك: معفى</span>";
-                } else if (me.paid) {
-                    document.getElementById('myStatus').innerHTML =
-                        "<span style='color:green'>✅ حالة دفعك: دافع</span>";
-                } else {
-                    document.getElementById('myStatus').innerHTML =
-                        "<span style='color:#c0392b'>⏳ حالة دفعك: لم تدفع</span>";
-                }
-            } else {
-                document.getElementById('myStatus').innerHTML =
-                    "<span style='color:#555'>لا يوجد سجل دفع لك حتى الآن</span>";
-            }
-
-            const yes = data.filter(p => safeStatus(p).includes('✅'));
-            const no = data.filter(p => safeStatus(p).includes('❌'));
-            const wait = data.filter(p =>
-                !safeStatus(p).includes('✅') &&
-                !safeStatus(p).includes('❌')
-            );
-
-            let html = "";
-            html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`).join('');
-            html += no.map(p => `<tr><td>${p.name}</td><td style="color:red; font-weight:bold;">معتذر ❌</td></tr>`).join('');
-            html += wait.map(p => `<tr><td>${p.name}</td><td style="color:gray;">لم يصوت</td></tr>`).join('');
-
-            document.getElementById('pBody').innerHTML = html;
-            document.getElementById('emptyNote').style.display = data.length ? 'none' : 'block';
-
-            await loadHistory();
-
-        } catch (e) {
-            console.error(e);
+    // 🟡 فقط اللاعب نفسه يشوف معفى
+    if(me){
+        if(isExempt(me)){
+            document.getElementById('myStatus').innerHTML =
+                "<span style='color:orange'>🟡 معفى</span>";
+        } else if(me.paid){
+            document.getElementById('myStatus').innerHTML =
+                "<span style='color:green'>✅ دافع</span>";
+        } else {
+            document.getElementById('myStatus').innerHTML =
+                "<span style='color:red'>⏳ لم يدفع</span>";
         }
     }
 
-    async function loadHistory() {
-        try {
-            const res = await fetch('/api/attendance/history');
-            const data = await res.json();
-            const keys = Object.keys(data);
+    // ❌ إخفاء المعفيين من الجدول
+    const filtered = data.filter(p => !isExempt(p));
 
-            if (!keys.length) {
-                document.getElementById('historyList').innerHTML = `<div class="empty-note">لا يوجد سجل بعد</div>`;
-                return;
-            }
+    const yes = filtered.filter(p => p.status?.includes('YES'));
+    const no = filtered.filter(p => p.status?.includes('NO'));
+    const wait = filtered.filter(p => !p.status);
 
-            let html = '';
-            keys.forEach(matchKey => {
-                html += `
-                    <div class="section-header">
-                        <span>${matchKey}</span>
-                        <span>(${data[matchKey].length})</span>
-                    </div>
-                `;
-                html += data[matchKey].map(name => `
-                    <div class="row">
-                        <span>${name}</span>
-                        <span style="color:green;font-weight:bold;">✅</span>
-                    </div>
-                `).join('');
-            });
+    let html = "";
 
-            document.getElementById('historyList').innerHTML = html;
-        } catch (e) {
-            console.error(e);
-        }
-    }
+    html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green">سأحضر</td></tr>`).join('');
+    html += no.map(p => `<tr><td>${p.name}</td><td style="color:red">معتذر</td></tr>`).join('');
+    html += wait.map(p => `<tr><td>${p.name}</td><td style="color:gray">لم يصوت</td></tr>`).join('');
 
-    async function vote(status) {
-        await fetch('/api/attendance/register', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ playerName: fullName, status })
-        });
-        update();
-    }
-
-    async function removeVote() {
-        if (!confirm("هل تريد إلغاء تصويتك؟")) return;
-
-        await fetch('/api/attendance/remove', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ playerName: fullName })
-        });
-        update();
-    }
-
-    function logout() {
-        localStorage.removeItem('fullName');
-        window.location.href = 'login.html';
-    }
-
-    window.onload = update;
+    document.getElementById('pBody').innerHTML = html;
+}
 </script>
 </body>
 </html>
