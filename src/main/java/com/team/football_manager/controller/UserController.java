@@ -1,122 +1,524 @@
-package com.team.football_manager.controller;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>غرفة العمليات</title>
 
-import com.team.football_manager.model.User;
-import com.team.football_manager.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-import java.util.*;
-import java.util.stream.Collectors;
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2c3e50;
+            color: white;
+            overflow: hidden;
+        }
 
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
+        .header {
+            text-align: center;
+            padding: 14px 12px;
+            background: #1f2d3a;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
 
-    @Autowired
-    private UserRepository userRepository;
+        .swipe-hint {
+            text-align: center;
+            padding: 8px 12px;
+            background: #243544;
+            font-size: 14px;
+            color: #dfe6ec;
+        }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> registerPlayer(@RequestBody User user) {
+        .slider {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 86px);
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .slider::-webkit-scrollbar {
+            display: none;
+        }
+
+        .page {
+            flex: 0 0 100%;
+            width: 100%;
+            scroll-snap-align: start;
+            overflow-y: auto;
+            padding: 18px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.96);
+            color: #2c3e50;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #d8d8d8;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .main-btn {
+            border: none;
+            background: #27ae60;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .main-btn:hover {
+            background: #219150;
+        }
+
+        .warning-btn {
+            border: none;
+            background: #e67e22;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .warning-btn:hover {
+            background: #cf711d;
+        }
+
+        .delete-btn {
+            border: none;
+            background: #c0392b;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #a93226;
+        }
+
+        .section-header {
+            background: #eef3f7;
+            color: #2c3e50;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin: 14px 0 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 10px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .row:last-child {
+            border-bottom: none;
+        }
+
+        .empty {
+            text-align: center;
+            color: #666;
+            padding: 14px 0;
+        }
+
+        .page-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #b8c4cc;
+        }
+
+        .dot.active {
+            background: #27ae60;
+            transform: scale(1.12);
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                font-size: 18px;
+            }
+
+            .page {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 14px;
+                border-radius: 14px;
+            }
+
+            input, button {
+                font-size: 15px;
+            }
+
+            .row {
+                padding: 10px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">غرفة العمليات</div>
+<div class="swipe-hint">اسحب يمين أو يسار للتنقل بين الصفحات</div>
+
+<div class="slider" id="slider">
+
+    <section class="page">
+        <div class="card">
+            <h2>🗓️ مباراة جديدة</h2>
+            <input type="text" id="loc" placeholder="المكان">
+            <input type="datetime-local" id="dt">
+            <button class="main-btn" onclick="createNewMatch()">نشر المباراة</button>
+
+            <div class="page-indicator">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="card">
+            <h2>🗳️ قائمة التصويت</h2>
+            <div id="voteList"></div>
+
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="card">
+            <h2>💰 الدفع</h2>
+            <div id="payStats"></div>
+            <div id="payList"></div>
+            <button class="warning-btn" onclick="resetMonth()">تصفير الدفع </button>
+
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot active"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="card">
+            <h2>👥 تعديل اللاعبين</h2>
+            <div id="playersEditor"></div>
+
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot active"></span>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    const slider = document.getElementById('slider');
+
+    function sortByName(list) {
+        return [...list].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+    }
+
+    async function load() {
         try {
-            String fullName = user.getFullName() != null
-                    ? user.getFullName().trim().replaceAll("\\s+", " ")
-                    : "";
+            const res = await fetch('/api/attendance/active-list');
+            const data = await res.json();
 
-            if (fullName.isEmpty()) {
-                return ResponseEntity.badRequest().body("الاسم مطلوب");
+            const yes = sortByName(data.filter(p => p.status.includes('✅')));
+            const no = sortByName(data.filter(p => p.status.includes('❌')));
+            const wait = sortByName(data.filter(p => !p.status.includes('✅') && !p.status.includes('❌')));
+
+            let voteHtml = '';
+
+            if (yes.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⚽ حاضرون</span>
+                        <span>(${yes.length})</span>
+                    </div>
+                `;
+                voteHtml += yes.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:green;font-weight:bold;">✅</span>
+                    </div>
+                `).join('');
             }
 
-            if (userRepository.findByFullName(fullName).isPresent()) {
-                return ResponseEntity.badRequest().body("اللاعب مسجل مسبقًا");
+            if (no.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>❌ معتذرون</span>
+                        <span>(${no.length})</span>
+                    </div>
+                `;
+                voteHtml += no.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:red;font-weight:bold;">❌</span>
+                    </div>
+                `).join('');
             }
 
-            User newUser = new User();
-            newUser.setFullName(fullName);
-            newUser.setUsername(fullName);
-            newUser.setAge(user.getAge());
-            newUser.setRole("PLAYER");
-            newUser.setPassword("");
-            newUser.setWorking(user.isWorking());
+            if (wait.length) {
+                voteHtml += `
+                    <div class="section-header">
+                        <span>⏳ لم يصوتوا</span>
+                        <span>(${wait.length})</span>
+                    </div>
+                `;
+                voteHtml += wait.map(p => `
+                    <div class="row">
+                        <span>${p.name}</span>
+                        <span style="color:gray;">لم يصوت</span>
+                    </div>
+                `).join('');
+            }
 
-            User saved = userRepository.save(newUser);
+            document.getElementById('voteList').innerHTML =
+                voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "تم التسجيل بنجاح");
-            response.put("id", saved.getId());
-            response.put("fullName", saved.getFullName());
+            const paidCount = data.filter(p => p.paid === true).length;
+            const unpaidCount = data.filter(p => p.paid === false).length;
+            const exemptCount = data.filter(p => p.paid === "معفي").length;
 
-            return ResponseEntity.ok(response);
+            document.getElementById('payStats').innerHTML = `
+                <div class="section-header">
+                    <span>✅ دافعين: ${paidCount}</span>
+                    <span>❌ غير دافعين: ${unpaidCount}</span>
+                </div>
+                <div class="section-header">
+                    <span>🟡 معفيين: ${exemptCount}</span>
+                    <span>المجموع: ${data.length}</span>
+                </div>
+            `;
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body("فشل التسجيل: " + e.getMessage());
+            const paymentSorted = [...data].sort((a, b) => {
+                const aExempt = a.paid === "معفي";
+                const bExempt = b.paid === "معفي";
+
+                if (aExempt && !bExempt) return 1;
+                if (!aExempt && bExempt) return -1;
+
+                return String(a.name || '').localeCompare(String(b.name || ''), 'ar');
+            });
+
+            document.getElementById('payList').innerHTML = paymentSorted.length
+                ? paymentSorted.map(p => {
+                    if (p.paid === "معفي") {
+                        return `
+                            <div class="row">
+                                <span>${p.name}</span>
+                                <span style="color:#e67e22;font-weight:bold;">معفي من الدفع</span>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="row">
+                            <span>${p.name}</span>
+                            <label style="display:flex;align-items:center;gap:8px;">
+                                <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
+                                <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
+                            </label>
+                        </div>
+                    `;
+                }).join('')
+                : `<div class="empty">لا يوجد لاعبين</div>`;
+
+            await loadPlayersEditor();
+
+        } catch (e) {
+            console.error('Error loading data:', e);
         }
     }
 
-    @GetMapping("/check")
-    public String checkPlayer(@RequestParam String name) {
-        String cleanedName = name == null ? "" : name.trim().replaceAll("\\s+", " ");
+    async function loadPlayersEditor() {
+        const box = document.getElementById('playersEditor');
+        if (!box) return;
 
-        if (cleanedName.isEmpty()) {
-            return "NOT_FOUND";
-        }
+        const res = await fetch('/api/users/players');
+        const players = await res.json();
 
-        boolean exists = userRepository.findByFullName(cleanedName).isPresent();
-        return exists ? "FOUND" : "NOT_FOUND";
+        box.innerHTML = players.length
+            ? players.map(p => `
+                <div class="row" style="display:block;">
+                    <input type="text" id="name-${p.id}" value="${p.fullName || ''}" placeholder="اسم اللاعب">
+                    <input type="number" id="age-${p.id}" value="${p.age || 0}" placeholder="العمر">
+
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                        <input type="checkbox" id="working-${p.id}" style="width:auto;margin:0;" ${p.working ? 'checked' : ''}>
+                        <span>بشتغل</span>
+                    </label>
+
+                    <button class="main-btn" onclick="updatePlayer(${p.id})">حفظ التعديل</button>
+                    <button class="delete-btn" onclick="deletePlayer(${p.id}, '${String(p.fullName || '').replace(/'/g, "\\'")}')">حذف اللاعب</button>
+                </div>
+            `).join('')
+            : `<div class="empty">لا يوجد لاعبين</div>`;
     }
 
-    @GetMapping("/players")
-    public List<Map<String, Object>> getPlayers() {
-        return userRepository.findAll()
-                .stream()
-                .filter(user -> !"ADMIN".equalsIgnoreCase(user.getRole()))
-                .map(user -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", user.getId());
-                    map.put("fullName", user.getFullName());
-                    map.put("age", user.getAge());
-                    map.put("working", user.isWorking());
-                    return map;
-                })
-                .collect(Collectors.toList());
+    async function updatePlayer(id) {
+        const fullName = document.getElementById(`name-${id}`).value.trim();
+        const age = parseInt(document.getElementById(`age-${id}`).value, 10);
+        const working = document.getElementById(`working-${id}`).checked;
+
+        if (!fullName) {
+            alert('اسم اللاعب مطلوب');
+            return;
+        }
+
+        if (isNaN(age) || age <= 0) {
+            alert('العمر غير صحيح');
+            return;
+        }
+
+        const res = await fetch(`/api/users/update/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fullName,
+                age,
+                working
+            })
+        });
+
+        const text = await res.text();
+
+        if (!res.ok) {
+            alert(text);
+            return;
+        }
+
+        alert('تم تعديل بيانات اللاعب');
+        load();
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> updatePlayer(@PathVariable Long id, @RequestBody User updatedUser) {
-        Optional<User> optionalUser = userRepository.findById(id);
+    async function deletePlayer(id, name) {
+        const confirmation = prompt(`لحذف اللاعب "${name}" اكتب حذف`);
 
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.badRequest().body("اللاعب غير موجود");
+        if (confirmation !== "حذف") {
+            alert('تم إلغاء الحذف');
+            return;
         }
 
-        User user = optionalUser.get();
+        const res = await fetch(`/api/users/delete/${id}`, {
+            method: 'DELETE'
+        });
 
-        if ("ADMIN".equalsIgnoreCase(user.getRole())) {
-            return ResponseEntity.badRequest().body("لا يمكن تعديل حساب الأدمن من هنا");
+        const text = await res.text();
+
+        if (!res.ok) {
+            alert(text);
+            return;
         }
 
-        String fullName = updatedUser.getFullName() != null
-                ? updatedUser.getFullName().trim().replaceAll("\\s+", " ")
-                : "";
-
-        if (fullName.isEmpty()) {
-            return ResponseEntity.badRequest().body("الاسم مطلوب");
-        }
-
-        Optional<User> sameNameUser = userRepository.findByFullName(fullName);
-        if (sameNameUser.isPresent() && !sameNameUser.get().getId().equals(id)) {
-            return ResponseEntity.badRequest().body("هذا الاسم مستخدم مسبقًا");
-        }
-
-        user.setFullName(fullName);
-        user.setUsername(fullName);
-        user.setAge(updatedUser.getAge());
-        user.setWorking(updatedUser.isWorking());
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok("تم تعديل بيانات اللاعب");
+        alert('تم حذف اللاعب');
+        load();
     }
-}
+
+    async function createNewMatch() {
+        const location = document.getElementById('loc').value;
+        const dateTime = document.getElementById('dt').value;
+
+        if (!location || !dateTime) {
+            alert('عبئ المكان والوقت أولاً');
+            return;
+        }
+
+        if (confirm('نشر المباراة الجديدة؟')) {
+            await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+
+            const res = await fetch('/api/matches/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ location, dateTime, active: true })
+            });
+
+            if (res.ok) {
+                alert('تم نشر المباراة وتجهيز القائمة ⚽');
+                document.getElementById('loc').value = '';
+                document.getElementById('dt').value = '';
+                load();
+
+                slider.scrollTo({
+                    left: slider.clientWidth,
+                    behavior: 'smooth'
+                });
+            } else {
+                alert('حدث خطأ أثناء نشر المباراة');
+            }
+        }
+    }
+
+    async function toggle(id) {
+        await fetch(`/api/attendance/toggle-payment/${id}`, { method: 'POST' });
+        load();
+    }
+
+    async function resetMonth() {
+        const confirmation = prompt('لتأكيد تصفير الدفع للجميع، اكتب كلمة: تصفير');
+
+        if (confirmation !== "تصفير") {
+            alert('تم إلغاء تصفير الدفع');
+            return;
+        }
+
+        await fetch('/api/attendance/reset-month', { method: 'POST' });
+        alert('تم تصفير الدفع');
+        load();
+    }
+
+    window.onload = load;
+</script>
+
+</body>
+</html>
