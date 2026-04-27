@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>صفحة اللاعب</title>
     <style>
-        /* سأبقي الـ CSS كما هو مع تعديل بسيط للـ Dots */
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(180deg, #223648, #2c3e50); color: white; overflow: hidden; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(180deg, #223648, #2c3e50); color: white; overflow: hidden; }
         .header { text-align: center; padding: 14px 12px; background: #1f2d3a; font-size: 18px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .swipe-hint { text-align: center; padding: 8px 12px; background: #243544; font-size: 13px; color: #dfe6ec; }
         .slider { display: flex; width: 100%; height: calc(100vh - 86px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
@@ -17,29 +16,76 @@
         .card { background: #ecf0f1; color: #2c3e50; padding: 24px 18px; text-align: center; }
         .player-name { margin: 0 0 12px; font-size: 1.5rem; }
         .match-info { background: #dfe6e9; padding: 12px; border-radius: 12px; font-size: 0.95rem; margin-bottom: 12px; min-height: 70px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.6; }
-        .status-box { font-weight: bold; margin-bottom: 14px; min-height: 24px; font-size: 0.9rem; }
-        .btn { width: 100%; padding: 14px; margin: 7px 0; border: none; border-radius: 14px; font-size: 1rem; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .status-box { font-weight: bold; margin-bottom: 14px; min-height: 24px; font-size: 0.95rem; }
+        .btn { width: 100%; padding: 14px; margin: 7px 0; border: none; border-radius: 14px; font-size: 1rem; cursor: pointer; font-weight: bold; transition: 0.2s; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-yes { background: #1f9d55; }
         .btn-no { background: #d64541; }
         .btn-clear { background: #f39c12; }
-        .btn-logout { background: #4b5d6b; margin-top: 15px; }
-        .table-container { background: white; color: #333; padding: 16px; }
+        .btn-logout { background: #4b5d6b; margin-top: 10px; }
+        .table-container { background: white; color: #333; padding: 16px; min-height: 200px; }
         .table-title { text-align: center; color: #2c3e50; margin: 0 0 14px; font-size: 1.2rem; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 0.9rem; }
         th { background: #34495e; color: white; }
         .page-indicator { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #b8c4cc; }
-        .dot.active { background: #27ae60; transform: scale(1.2); }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #b8c4cc; }
+        .dot.active { background: #27ae60; transform: scale(1.1); }
     </style>
 </head>
 <body>
 
 <script>
-    // التأكد من وجود الاسم
     const fullName = localStorage.getItem('fullName');
     if (!fullName) window.location.href = 'login.html';
+</script>
 
+<div class="header" id="playerHeader">صفحة اللاعب</div>
+<div class="swipe-hint">اسحب لليسار لرؤية قائمة الحضور ⬅️</div>
+
+<div class="slider" id="slider">
+    <section class="page">
+        <div class="card">
+            <h2 id="pName" class="player-name">كابتن</h2>
+            <div id="mInfo" class="match-info">جاري التحميل...</div>
+            
+            <div id="myStatus" class="status-box"></div>
+
+            <button class="btn btn-yes" id="yesBtn" onclick="vote('YES')">⚽ سأحضر</button>
+            <button class="btn btn-no" id="noBtn" onclick="vote('NO')">❌ أعتذر</button>
+            <button class="btn btn-clear" id="clearBtn" onclick="removeVote()">🧹 إلغاء التصويت</button>
+            <button class="btn btn-logout" onclick="logout()">تسجيل الخروج</button>
+
+            <div class="page-indicator">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="page">
+        <div class="table-container">
+            <h3 class="table-title">📊 قائمة الحضور</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اللاعب</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pBody"></tbody>
+                </table>
+            </div>
+            <div class="page-indicator">
+                <span class="dot"></span>
+                <span class="dot active"></span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
     document.getElementById('pName').innerText = "كابتن " + fullName;
     document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
 
@@ -65,25 +111,24 @@
                 if(clearBtn) clearBtn.disabled = false;
             }
 
-            // 2. جلب قائمة اللاعبين وحالة الدفع
+            // 2. جلب قائمة الحضور والبيانات
             const res = await fetch('/api/attendance/active-list');
             const data = await res.json();
 
-            // تحديث حالة الدفع الخاصة بك
+            // تحديث حالة الدفع الخاصة بالمستخدم الحالي
             const me = data.find(p => p.name === fullName);
             const statusDiv = document.getElementById('myStatus');
             if (me && statusDiv) {
-                if (me.paid) {
-                    statusDiv.innerHTML = "<span style='color:green'>✅ حالة دفعك: دافع</span>";
-                } else if (me.isExempt || me.job === 'none' || me.name.includes("معفي")) { 
-                    // ملاحظة: غيرت الشرط ليقرأ أي دلالة على أنه معفي
-                    statusDiv.innerHTML = "<span style='color:#2980b9'>🛡️ حالة دفعك: أنت معفي</span>";
+                if (me.isExempt) {
+                    statusDiv.innerHTML = "<span style='color:#2980b9'>🛡️ حالة الدفع: أنت معفي من الرسوم</span>";
+                } else if (me.paid) {
+                    statusDiv.innerHTML = "<span style='color:green'>✅ حالة الدفع: تم الدفع</span>";
                 } else {
-                    statusDiv.innerHTML = "<span style='color:#c0392b'>⏳ حالة دفعك: لم تدفع</span>";
+                    statusDiv.innerHTML = "<span style='color:#c0392b'>⏳ حالة الدفع: لم تدفع بعد</span>";
                 }
             }
 
-            // 3. تحديث جدول قائمة اللاعبين (قائمة الحضور)
+            // 3. تحديث جدول قائمة الحضور (الصفحة الثانية)
             const pBody = document.getElementById('pBody');
             if (pBody) {
                 const yes = data.filter(p => p.status && p.status.includes('✅'));
@@ -94,16 +139,14 @@
                 html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`).join('');
                 html += no.map(p => `<tr><td>${p.name}</td><td style="color:red; font-weight:bold;">معتذر ❌</td></tr>`).join('');
                 html += wait.map(p => `<tr><td>${p.name}</td><td style="color:gray;">لم يصوت</td></tr>`).join('');
-
-                pBody.innerHTML = html || "<tr><td colspan='2'>لا يوجد لاعبين حالياً</td></tr>";
+                pBody.innerHTML = html || "<tr><td colspan='2'>لا يوجد بيانات</td></tr>";
             }
 
-        } catch (e) { 
-            console.error("حدث خطأ في التحديث:", e); 
+        } catch (e) {
+            console.error("Error updating player page:", e);
         }
     }
 
-    // وظائف التصويت
     async function vote(status) {
         try {
             await fetch('/api/attendance/register', {
@@ -112,7 +155,7 @@
                 body: JSON.stringify({ playerName: fullName, status: status })
             });
             update();
-        } catch (e) { alert("خطأ في التصويت"); }
+        } catch (e) { alert("حدث خطأ في التصويت"); }
     }
 
     async function removeVote() {
@@ -124,7 +167,7 @@
                 body: JSON.stringify({ playerName: fullName })
             });
             update();
-        } catch (e) { alert("خطأ في الإلغاء"); }
+        } catch (e) { alert("حدث خطأ في الإلغاء"); }
     }
 
     function logout() {
@@ -134,5 +177,6 @@
 
     window.onload = update;
 </script>
+
 </body>
 </html>
