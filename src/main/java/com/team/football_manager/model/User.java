@@ -19,5 +19,6 @@ public class User {
     private String password;
     private String role; // ADMIN or PLAYER
 
-    private boolean exempt = false; 
+    // ميزة الإعفاء
+    private boolean isExempt = false; 
 }
