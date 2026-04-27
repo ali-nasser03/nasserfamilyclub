@@ -19,6 +19,5 @@ public class User {
     private String password;
     private String role; // ADMIN or PLAYER
 
-    // الحقل الجديد
     private boolean exempt = false; 
 }
