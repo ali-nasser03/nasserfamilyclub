@@ -363,9 +363,12 @@
 
             const me = data.find(p => p.name === fullName);
             if (me) {
-                document.getElementById('myStatus').innerHTML = me.paid
-                    ? "<span style='color:green'>✅ حالة دفعك: دافع</span>"
-                    : "<span style='color:#c0392b'>⏳ حالة دفعك: لم تدفع</span>";
+               document.getElementById('myStatus').innerHTML =
+    me.paid === "معفي"
+        ? "<span style='color:orange'>🟡 معفي من الدفع</span>"
+        : me.paid
+            ? "<span style='color:green'>✅ دافع</span>"
+            : "<span style='color:#c0392b'>❌ لم تدفع</span>";
             } else {
                 document.getElementById('myStatus').innerHTML =
                     "<span style='color:#555'>لا يوجد سجل دفع لك حتى الآن</span>";
