@@ -1,10 +1,9 @@
 package com.team.football_manager.repository;
 
-import com.team.football_manager.model.User;
+import com.team.football_manager.model.Match;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+import java.util.List;
 
-public interface UserRepository extends JpaRepository<User, Long> {
-    // تم تصحيح الباراميتر ليتوافق مع fullName في موديل User
-    Optional<User> findByFullName(String fullName);
+public interface MatchRepository extends JpaRepository<Match, Long> {
+    List<Match> findByIsActiveTrue(); // لجلب المباراة القادمة فقط
 }
