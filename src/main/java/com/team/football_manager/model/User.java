@@ -19,7 +19,4 @@ public class User {
     private String fullName;
 
     private String role; // ADMIN or PLAYER
-
-    @Column(name = "is_employed", nullable = false, columnDefinition = "boolean default true")
-    private boolean isEmployed = true; // true = بيشتغل, false = ما بيشتغل (معفي من الدفع)
 }
