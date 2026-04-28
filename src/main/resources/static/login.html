@@ -114,36 +114,39 @@
             background: #5b636a;
         }
 
-        .register-box {
+        .modal-overlay {
             display: none;
-            margin-top: 10px;
-            padding-top: 18px;
-            border-top: 1px solid #ddd;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
         }
 
-        .register-box.active {
-            display: block;
+        .modal-box {
+            background-color: rgba(255,255,255,0.98);
+            width: 100%;
+            max-width: 390px;
+            padding: 22px 18px;
+            border-radius: 22px;
+            box-shadow: 0 14px 35px rgba(0,0,0,0.28);
+            text-align: center;
+            border: 1px solid #eee;
         }
 
-        .admin-password-box {
-            display: none;
-            margin-top: 12px;
-            padding: 18px;
-            border: 1px solid #d8d8d8;
-            border-radius: 18px;
-            background: #f8f9fa;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.04);
-        }
-
-        .admin-password-box.active {
-            display: block;
-        }
-
-        .admin-password-title {
-            margin: 0 0 12px;
+        .modal-box h2 {
+            margin: 0 0 16px;
             color: #111;
-            font-weight: bold;
-            font-size: 1.05rem;
+            font-size: 1.35rem;
+        }
+
+        .modal-box .small-hint {
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 14px;
         }
 
         @media (max-width: 480px) {
@@ -175,6 +178,11 @@
                 font-size: 1rem;
                 padding: 13px;
             }
+
+            .modal-box {
+                border-radius: 20px;
+                padding: 20px 16px;
+            }
         }
     </style>
 </head>
@@ -192,21 +200,34 @@
     <div id="loginSection">
         <input type="text" id="username" placeholder="أدخل اسمك الكامل">
         <button class="btn btn-login" onclick="login()">دخول</button>
-        <button class="btn btn-register" onclick="showRegisterForm()">تسجيل لاعب جديد</button>
+        <button class="btn btn-register" onclick="showRegisterPopup()">تسجيل لاعب جديد</button>
     </div>
+</div>
 
-    <div id="adminPasswordBox" class="admin-password-box">
-        <div class="admin-password-title">كلمة سر الأدمن</div>
-        <input type="password" id="adminPassword" placeholder="أدخل كلمة السر">
+<div id="adminPopup" class="modal-overlay">
+    <div class="modal-box">
+        <h2>كلمة سر الأدمن</h2>
+        <div class="small-hint">أدخل كلمة السر للانتقال إلى غرفة العمليات</div>
+        <input type="password" id="adminPassword" placeholder="كلمة السر">
         <button class="btn btn-confirm" onclick="adminLogin()">دخول الأدمن</button>
-        <button class="btn btn-cancel" onclick="hideAdminPasswordBox()">إلغاء</button>
+        <button class="btn btn-cancel" onclick="hideAdminPopup()">إلغاء</button>
     </div>
+</div>
 
-    <div id="registerSection" class="register-box">
+<div id="registerPopup" class="modal-overlay">
+    <div class="modal-box">
+        <h2>تسجيل لاعب جديد</h2>
+        <div class="small-hint">أدخل الاسم الثلاثي والعمر</div>
         <input type="text" id="registerName" placeholder="أدخل الاسم الثلاثي">
         <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
+
+        <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;color:#333;">
+            <input type="checkbox" id="registerWorking" style="width:auto;margin:0;" checked>
+            <span>بشتغل</span>
+        </label>
+
         <button class="btn btn-confirm" onclick="registerPlayer()">تأكيد التسجيل</button>
-        <button class="btn btn-cancel" onclick="hideRegisterForm()">إلغاء</button>
+        <button class="btn btn-cancel" onclick="hideRegisterPopup()">إلغاء</button>
     </div>
 </div>
 
@@ -217,29 +238,32 @@
         return name.trim().replace(/\s+/g, ' ');
     }
 
-    function showRegisterForm() {
-        hideAdminPasswordBox();
-        document.getElementById('registerSection').classList.add('active');
+    function showAdminPopup(name) {
+        pendingAdminName = name;
+        document.getElementById('adminPassword').value = "";
+        document.getElementById('adminPopup').style.display = "flex";
+        setTimeout(() => document.getElementById('adminPassword').focus(), 50);
     }
 
-    function hideRegisterForm() {
-        document.getElementById('registerSection').classList.remove('active');
+    function hideAdminPopup() {
+        pendingAdminName = "";
+        document.getElementById('adminPassword').value = "";
+        document.getElementById('adminPopup').style.display = "none";
+    }
+
+    function showRegisterPopup() {
         document.getElementById('registerName').value = "";
         document.getElementById('registerAge').value = "";
+        document.getElementById('registerWorking').checked = true;
+        document.getElementById('registerPopup').style.display = "flex";
+        setTimeout(() => document.getElementById('registerName').focus(), 50);
     }
 
-    function showAdminPasswordBox(name) {
-        hideRegisterForm();
-        pendingAdminName = name;
-        document.getElementById('adminPasswordBox').classList.add('active');
-        document.getElementById('adminPassword').value = "";
-        document.getElementById('adminPassword').focus();
-    }
-
-    function hideAdminPasswordBox() {
-        pendingAdminName = "";
-        document.getElementById('adminPasswordBox').classList.remove('active');
-        document.getElementById('adminPassword').value = "";
+    function hideRegisterPopup() {
+        document.getElementById('registerName').value = "";
+        document.getElementById('registerAge').value = "";
+        document.getElementById('registerWorking').checked = true;
+        document.getElementById('registerPopup').style.display = "none";
     }
 
     async function login() {
@@ -252,7 +276,7 @@
         }
 
         if (name === "Admin" || name === "محمود ناصر") {
-            showAdminPasswordBox(name);
+            showAdminPopup(name);
             return;
         }
 
@@ -311,6 +335,7 @@
         const rawName = document.getElementById('registerName').value;
         const name = normalizeName(rawName);
         const ageValue = document.getElementById('registerAge').value;
+        const working = document.getElementById('registerWorking').checked;
 
         if (!name) {
             alert("يرجى إدخال الاسم الثلاثي");
@@ -336,7 +361,7 @@
                 body: JSON.stringify({
                     fullName: name,
                     age: age,
-                    working: true
+                    working: working
                 })
             });
 
@@ -348,7 +373,7 @@
             }
 
             alert("تم تسجيل اللاعب بنجاح");
-            hideRegisterForm();
+            hideRegisterPopup();
             document.getElementById('username').value = name;
         } catch (e) {
             alert("حدث خطأ أثناء التسجيل");
