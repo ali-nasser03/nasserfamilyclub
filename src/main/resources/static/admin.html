@@ -1,542 +1,255 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>غرفة العمليات</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>غرفة العمليات</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+*{box-sizing:border-box;}
 
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #2c3e50;
-            color: white;
-            overflow: hidden;
-        }
+body{
+margin:0;
+font-family:'Segoe UI',Tahoma;
+background:#2c3e50;
+color:white;
+overflow:hidden;
+}
 
-        .header {
-            text-align: center;
-            padding: 14px 12px;
-            background: #1f2d3a;
-            font-size: 20px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
+.header{
+text-align:center;
+padding:14px;
+background:#1f2d3a;
+font-size:20px;
+font-weight:bold;
+}
 
-        .swipe-hint {
-            text-align: center;
-            padding: 8px 12px;
-            background: #243544;
-            font-size: 14px;
-            color: #dfe6ec;
-        }
+.slider{
+display:flex;
+width:100%;
+height:calc(100vh - 60px);
+overflow-x:auto;
+scroll-snap-type:x mandatory;
+}
 
-        .slider {
-            display: flex;
-            width: 100%;
-            height: calc(100vh - 86px);
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
+.page{
+flex:0 0 100%;
+padding:16px;
+}
 
-        .slider::-webkit-scrollbar {
-            display: none;
-        }
+.card{
+background:white;
+color:#2c3e50;
+border-radius:18px;
+padding:18px;
+max-width:700px;
+margin:auto;
+}
 
-        .page {
-            flex: 0 0 100%;
-            width: 100%;
-            scroll-snap-align: start;
-            overflow-y: auto;
-            padding: 18px;
-        }
+input,button{
+width:100%;
+padding:12px;
+margin-bottom:10px;
+border-radius:12px;
+border:1px solid #ddd;
+}
 
-        .card {
-            background: rgba(255,255,255,0.96);
-            color: #2c3e50;
-            border-radius: 18px;
-            padding: 18px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
-            max-width: 700px;
-            margin: 0 auto;
-        }
+.main-btn{background:#27ae60;color:white;border:none;}
+.warning-btn{background:#e67e22;color:white;border:none;}
+.delete-btn{background:#c0392b;color:white;border:none;}
 
-        h2 {
-            margin-top: 0;
-            text-align: center;
-        }
+.row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:10px;
+border-bottom:1px solid #eee;
+}
 
-        input, button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #d8d8d8;
-            margin-bottom: 12px;
-            font-size: 16px;
-        }
+.section-header{
+background:#eef3f7;
+padding:10px;
+margin-top:10px;
+border-radius:10px;
+display:flex;
+justify-content:space-between;
+}
 
-        .main-btn {
-            border: none;
-            background: #27ae60;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .main-btn:hover {
-            background: #219150;
-        }
-
-        .warning-btn {
-            border: none;
-            background: #e67e22;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .warning-btn:hover {
-            background: #cf711d;
-        }
-
-        .delete-btn {
-            border: none;
-            background: #c0392b;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .delete-btn:hover {
-            background: #a93226;
-        }
-
-        .section-header {
-            background: #eef3f7;
-            color: #2c3e50;
-            padding: 10px 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            margin: 14px 0 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 10px;
-            border-bottom: 1px solid #ececec;
-        }
-
-        .row:last-child {
-            border-bottom: none;
-        }
-
-        .empty {
-            text-align: center;
-            color: #666;
-            padding: 14px 0;
-        }
-
-        .page-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 14px;
-        }
-
-        .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #b8c4cc;
-        }
-
-        .dot.active {
-            background: #27ae60;
-            transform: scale(1.12);
-        }
-
-        @media (max-width: 600px) {
-            .header {
-                font-size: 18px;
-            }
-
-            .page {
-                padding: 12px;
-            }
-
-            .card {
-                padding: 14px;
-                border-radius: 14px;
-            }
-
-            input, button {
-                font-size: 15px;
-            }
-
-            .row {
-                padding: 10px 6px;
-            }
-        }
-    </style>
+.empty{text-align:center;color:#777;}
+</style>
 </head>
+
 <body>
 
 <div class="header">غرفة العمليات</div>
-<div class="swipe-hint">اسحب يمين أو يسار للتنقل بين الصفحات</div>
 
-<div class="slider" id="slider">
+<div class="slider">
 
-    <section class="page">
-        <div class="card">
-            <h2>🗓️ مباراة جديدة</h2>
-            <input type="text" id="loc" placeholder="المكان">
-            <input type="datetime-local" id="dt">
-            <button class="main-btn" onclick="createNewMatch()">نشر المباراة</button>
+<!-- التصويت -->
+<section class="page">
+<div class="card">
+<h2>🗳️ التصويت</h2>
+<div id="voteList"></div>
+</div>
+</section>
 
-            <div class="page-indicator">
-                <span class="dot active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-        </div>
-    </section>
+<!-- الدفع -->
+<section class="page">
+<div class="card">
+<h2>💰 الدفع</h2>
 
-    <section class="page">
-        <div class="card">
-            <h2>🗳️ قائمة التصويت</h2>
-            <div id="voteList"></div>
+<div id="payStats"></div>
+<div id="payList"></div>
 
-            <div class="page-indicator">
-                <span class="dot"></span>
-                <span class="dot active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-        </div>
-    </section>
+<button class="warning-btn" onclick="resetMonth()">تصفير الدفع</button>
 
-    <section class="page">
-        <div class="card">
-            <h2>💰 الدفع</h2>
-            <div id="payStats"></div>
-            <div id="payList"></div>
-            <button class="warning-btn" onclick="resetMonth()">تصفير الدفع </button>
+</div>
+</section>
 
-            <div class="page-indicator">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot active"></span>
-                <span class="dot"></span>
-            </div>
-        </div>
-    </section>
-
-    <section class="page">
-        <div class="card">
-            <h2>👥 تعديل اللاعبين</h2>
-            <div id="playersEditor"></div>
-
-            <div class="page-indicator">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot active"></span>
-            </div>
-        </div>
-    </section>
+<!-- تعديل اللاعبين -->
+<section class="page">
+<div class="card">
+<h2>👥 تعديل اللاعبين</h2>
+<div id="playersEditor"></div>
+</div>
+</section>
 
 </div>
 
+<!-- 🔥 البوب أب -->
+<div id="confirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
+<div style="background:white;color:#2c3e50;padding:20px;border-radius:18px;width:90%;max-width:350px;text-align:center;">
+<h3 id="confirmTitle"></h3>
+<p id="confirmMessage"></p>
+
+<button class="main-btn" id="confirmYesBtn">نعم</button>
+<button class="warning-btn" onclick="closeConfirm()">إلغاء</button>
+</div>
+</div>
+
 <script>
-    const slider = document.getElementById('slider');
 
-    function sortByName(list) {
-        return [...list].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
-    }
+let confirmAction = null;
 
-    async function load() {
-        try {
-            const res = await fetch('/api/attendance/active-list');
-            const data = await res.json();
-
-            const yes = sortByName(data.filter(p => p.status.includes('✅')));
-            const no = sortByName(data.filter(p => p.status.includes('❌')));
-            const wait = sortByName(data.filter(p => !p.status.includes('✅') && !p.status.includes('❌')));
-
-            let voteHtml = '';
-
-            if (yes.length) {
-                voteHtml += `
-                    <div class="section-header">
-                        <span>⚽ حاضرون</span>
-                        <span>(${yes.length})</span>
-                    </div>
-                `;
-                voteHtml += yes.map(p => `
-                    <div class="row">
-                        <span>${p.name}</span>
-                        <span style="color:green;font-weight:bold;">✅</span>
-                    </div>
-                `).join('');
-            }
-
-            if (no.length) {
-                voteHtml += `
-                    <div class="section-header">
-                        <span>❌ معتذرون</span>
-                        <span>(${no.length})</span>
-                    </div>
-                `;
-                voteHtml += no.map(p => `
-                    <div class="row">
-                        <span>${p.name}</span>
-                        <span style="color:red;font-weight:bold;">❌</span>
-                    </div>
-                `).join('');
-            }
-
-            if (wait.length) {
-                voteHtml += `
-                    <div class="section-header">
-                        <span>⏳ لم يصوتوا</span>
-                        <span>(${wait.length})</span>
-                    </div>
-                `;
-                voteHtml += wait.map(p => `
-                    <div class="row">
-                        <span>${p.name}</span>
-                        <span style="color:gray;">لم يصوت</span>
-                    </div>
-                `).join('');
-            }
-
-            document.getElementById('voteList').innerHTML =
-                voteHtml || `<div class="empty">لا يوجد لاعبين</div>`;
-
-            const paidCount = data.filter(p => p.paid === true).length;
-            const unpaidCount = data.filter(p => p.paid === false).length;
-            const exemptCount = data.filter(p => p.paid === "معفي").length;
-
-            document.getElementById('payStats').innerHTML = `
-                <div class="section-header">
-                    <span>✅ دافعين: ${paidCount}</span>
-                    <span>❌ غير دافعين: ${unpaidCount}</span>
-                </div>
-                <div class="section-header">
-                    <span>🟡 معفيين: ${exemptCount}</span>
-                    <span>المجموع: ${data.length}</span>
-                </div>
-            `;
-
-            const paymentSorted = [...data].sort((a, b) => {
-                const aExempt = a.paid === "معفي";
-                const bExempt = b.paid === "معفي";
-
-                if (aExempt && !bExempt) return 1;
-                if (!aExempt && bExempt) return -1;
-
-                return String(a.name || '').localeCompare(String(b.name || ''), 'ar');
-            });
-
-            document.getElementById('payList').innerHTML = paymentSorted.length
-                ? paymentSorted.map(p => {
-                    if (p.paid === "معفي") {
-                        return `
-                            <div class="row">
-                                <span>${p.name}</span>
-                                <span style="color:#e67e22;font-weight:bold;">معفي من الدفع</span>
-                            </div>
-                        `;
-                    }
-
-                    return `
-                        <div class="row">
-                            <span>${p.name}</span>
-                            <label style="display:flex;align-items:center;gap:8px;">
-                                <input type="checkbox" style="width:auto;margin:0;" ${p.paid ? 'checked' : ''} onchange="toggle(${p.id})">
-                                <span>${p.paid ? 'دافع' : 'غير دافع'}</span>
-                            </label>
-                        </div>
-                    `;
-                }).join('')
-                : `<div class="empty">لا يوجد لاعبين</div>`;
-
-            await loadPlayersEditor();
-
-        } catch (e) {
-            console.error('Error loading data:', e);
-        }
-    }
-
-    async function loadPlayersEditor() {
-        const box = document.getElementById('playersEditor');
-        if (!box) return;
-
-        const res = await fetch('/api/users/players');
-        const players = await res.json();
-
-        box.innerHTML = players.length
-            ? players.map(p => `
-                <div class="row" style="display:block;">
-                    <input type="text" id="name-${p.id}" value="${p.fullName || ''}" placeholder="اسم اللاعب">
-                    <input type="number" id="age-${p.id}" value="${p.age || 0}" placeholder="العمر">
-
-                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                        <input type="checkbox" id="working-${p.id}" style="width:auto;margin:0;" ${p.working ? 'checked' : ''}>
-                        <span>بشتغل</span>
-                    </label>
-
-                    <button class="main-btn" onclick="updatePlayer(${p.id})">حفظ التعديل</button>
-                    <button class="delete-btn" onclick="deletePlayer(${p.id}, '${String(p.fullName || '').replace(/'/g, "\\'")}')">حذف اللاعب</button>
-                </div>
-            `).join('')
-            : `<div class="empty">لا يوجد لاعبين</div>`;
-    }
-
-    async function updatePlayer(id) {
-        const fullName = document.getElementById(`name-${id}`).value.trim();
-        const age = parseInt(document.getElementById(`age-${id}`).value, 10);
-        const working = document.getElementById(`working-${id}`).checked;
-
-        if (!fullName) {
-            alert('اسم اللاعب مطلوب');
-            return;
-        }
-
-        if (isNaN(age) || age <= 0) {
-            alert('العمر غير صحيح');
-            return;
-        }
-
-        const res = await fetch(`/api/users/update/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                fullName,
-                age,
-                working
-            })
-        });
-
-        const text = await res.text();
-
-        if (!res.ok) {
-            alert(text);
-            return;
-        }
-
-        alert('تم تعديل بيانات اللاعب');
-        load();
-    }
-
-    async function deletePlayer(id, name) {
-    const confirmation = confirm(`هل تريد حذف اللاعب "${name}"؟`);
-
-    if (!confirmation) {
-        return;
-    }
-
-    const res = await fetch(`/api/users/delete/${id}`, {
-        method: 'DELETE'
-    });
-
-    const text = await res.text();
-
-    if (!res.ok) {
-        alert(text);
-        return;
-    }
-
-    alert('تم حذف اللاعب');
-    load();
+function openConfirm(title,msg,action){
+confirmAction = action;
+document.getElementById('confirmTitle').innerText = title;
+document.getElementById('confirmMessage').innerText = msg;
+document.getElementById('confirmModal').style.display='flex';
 }
 
-        if (confirmation !== "حذف") {
-            alert('تم إلغاء الحذف');
-            return;
-        }
+function closeConfirm(){
+confirmAction=null;
+document.getElementById('confirmModal').style.display='none';
+}
 
-        const res = await fetch(`/api/users/delete/${id}`, {
-            method: 'DELETE'
-        });
+document.getElementById('confirmYesBtn').onclick = async ()=>{
+if(confirmAction) await confirmAction();
+closeConfirm();
+};
 
-        const text = await res.text();
+async function load(){
+const res = await fetch('/api/attendance/active-list');
+const data = await res.json();
 
-        if (!res.ok) {
-            alert(text);
-            return;
-        }
+const yes = data.filter(p=>p.status.includes('✅'));
+const no = data.filter(p=>p.status.includes('❌'));
+const wait = data.filter(p=>!p.status.includes('✅')&&!p.status.includes('❌'));
 
-        alert('تم حذف اللاعب');
-        load();
-    }
+let html='';
 
-    async function createNewMatch() {
-        const location = document.getElementById('loc').value;
-        const dateTime = document.getElementById('dt').value;
+if(yes.length){
+html+=`<div class="section-header">⚽ حاضرون (${yes.length})</div>`;
+html+=yes.map(p=>`<div class="row"><span>${p.name}</span><span>✅</span></div>`).join('');
+}
 
-        if (!location || !dateTime) {
-            alert('عبئ المكان والوقت أولاً');
-            return;
-        }
+if(no.length){
+html+=`<div class="section-header">❌ معتذرون (${no.length})</div>`;
+html+=no.map(p=>`<div class="row"><span>${p.name}</span><span>❌</span></div>`).join('');
+}
 
-        if (confirm('نشر المباراة الجديدة؟')) {
-            await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+if(wait.length){
+html+=`<div class="section-header">⏳ لم يصوتوا (${wait.length})</div>`;
+html+=wait.map(p=>`<div class="row"><span>${p.name}</span><span>⏳</span></div>`).join('');
+}
 
-            const res = await fetch('/api/matches/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ location, dateTime, active: true })
-            });
+document.getElementById('voteList').innerHTML = html || '<div class="empty">لا يوجد</div>';
 
-            if (res.ok) {
-                alert('تم نشر المباراة وتجهيز القائمة ⚽');
-                document.getElementById('loc').value = '';
-                document.getElementById('dt').value = '';
-                load();
+const paid = data.filter(p=>p.paid===true).length;
+const unpaid = data.filter(p=>p.paid===false).length;
+const exempt = data.filter(p=>p.paid==="معفي").length;
 
-                slider.scrollTo({
-                    left: slider.clientWidth,
-                    behavior: 'smooth'
-                });
-            } else {
-                alert('حدث خطأ أثناء نشر المباراة');
-            }
-        }
-    }
+document.getElementById('payStats').innerHTML = `
+<div class="section-header">دافع: ${paid} | غير دافع: ${unpaid}</div>
+<div class="section-header">معفي: ${exempt} | الكل: ${data.length}</div>
+`;
 
-    async function toggle(id) {
-        await fetch(`/api/attendance/toggle-payment/${id}`, { method: 'POST' });
-        load();
-    }
+document.getElementById('payList').innerHTML = data.map(p=>{
+if(p.paid==="معفي"){
+return `<div class="row"><span>${p.name}</span><span>معفي</span></div>`;
+}
+return `<div class="row">
+<span>${p.name}</span>
+<input type="checkbox" ${p.paid?'checked':''} onchange="toggle(${p.id})">
+</div>`;
+}).join('');
 
-    async function resetMonth() {
-        const confirmation = confirm('هل تريد تصفير الدفع للجميع؟');
+loadPlayers();
 
-        if (!confirmation) {
-            alert('تم إلغاء تصفير الدفع');
-        return;
-    }
+}
 
-        await fetch('/api/attendance/reset-month', { method: 'POST' });
-        alert('تم تصفير الدفع');
-        load();
-    }
+async function loadPlayers(){
+const res = await fetch('/api/users/players');
+const players = await res.json();
 
-    window.onload = load;
+document.getElementById('playersEditor').innerHTML = players.map(p=>`
+<div class="row" style="display:block;">
+<input value="${p.fullName}" id="n${p.id}">
+<input value="${p.age}" id="a${p.id}" type="number">
+<label>
+<input type="checkbox" id="w${p.id}" ${p.working?'checked':''}> بشتغل
+</label>
+
+<button class="main-btn" onclick="update(${p.id})">حفظ</button>
+<button class="delete-btn" onclick="deletePlayer(${p.id},'${p.fullName}')">حذف</button>
+</div>
+`).join('');
+}
+
+async function update(id){
+await fetch(`/api/users/update/${id}`,{
+method:'PUT',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+fullName:document.getElementById('n'+id).value,
+age:parseInt(document.getElementById('a'+id).value),
+working:document.getElementById('w'+id).checked
+})
+});
+load();
+}
+
+async function deletePlayer(id,name){
+openConfirm("حذف لاعب",`هل تريد حذف ${name}؟`,async()=>{
+await fetch(`/api/users/delete/${id}`,{method:'DELETE'});
+load();
+});
+}
+
+async function toggle(id){
+await fetch(`/api/attendance/toggle-payment/${id}`,{method:'POST'});
+load();
+}
+
+function resetMonth(){
+openConfirm("تصفير الدفع","هل تريد تصفير الدفع للجميع؟",async()=>{
+await fetch('/api/attendance/reset-month',{method:'POST'});
+load();
+});
+}
+
+load();
+
 </script>
 
 </body>
