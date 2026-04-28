@@ -9,14 +9,6 @@
             box-sizing: border-box;
         }
 
-        <div id="votePopup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:16px;">
-    <div style="background:white; color:#2c3e50; width:100%; max-width:330px; border-radius:18px; padding:20px; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
-        <h3 style="margin-top:0;">تم التصويت ✅</h3>
-        <p id="votePopupText" style="line-height:1.7;"></p>
-        <button class="btn btn-yes" onclick="closeVotePopup()">حسنًا</button>
-    </div>
-</div>
-
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -271,7 +263,6 @@
 <body>
 
 <script>
-    
     const fullName = localStorage.getItem('fullName');
     if (!fullName) {
         window.location.href = 'login.html';
@@ -324,18 +315,44 @@
             </div>
         </div>
     </section>
-
-            
-    </section>
 </div>
+
+<div id="votePopup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:white; color:#2c3e50; width:100%; max-width:330px; border-radius:18px; padding:20px; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
+        <h3 style="margin-top:0;">تم التصويت ✅</h3>
+        <p id="votePopupText" style="line-height:1.7;"></p>
+        <button class="btn btn-yes" onclick="closeVotePopup()">حسنًا</button>
+    </div>
+</div>
+
+<audio id="yesSound" src="yes.wav" preload="auto"></audio>
+<audio id="noSound" src="no.wav" preload="auto"></audio>
 
 <script>
     document.getElementById('pName').innerText = "كابتن " + fullName;
     document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
 
-    function showVotePopup(message) {
+    function showVotePopup(message, status) {
         document.getElementById('votePopupText').innerText = message;
         document.getElementById('votePopup').style.display = 'flex';
+
+        if (status === 'YES') {
+            const s = document.getElementById('yesSound');
+            s.currentTime = 0;
+            s.play().catch(() => {});
+
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        } else {
+            const s = document.getElementById('noSound');
+            s.currentTime = 0;
+            s.play().catch(() => {});
+        }
+
+        setTimeout(() => {
+            closeVotePopup();
+        }, 3000);
     }
 
     function closeVotePopup() {
@@ -380,12 +397,12 @@
 
             const me = data.find(p => p.name === fullName);
             if (me) {
-               document.getElementById('myStatus').innerHTML =
-    me.paid === "معفي"
-        ? "<span style='color:orange'>🟡 معفي من الدفع</span>"
-        : me.paid
-            ? "<span style='color:green'>✅ دافع</span>"
-            : "<span style='color:#c0392b'>❌ لم تدفع</span>";
+                document.getElementById('myStatus').innerHTML =
+                    me.paid === "معفي"
+                        ? "<span style='color:orange'>🟡 معفي من الدفع</span>"
+                        : me.paid
+                            ? "<span style='color:green'>✅ دافع</span>"
+                            : "<span style='color:#c0392b'>❌ لم تدفع</span>";
             } else {
                 document.getElementById('myStatus').innerHTML =
                     "<span style='color:#555'>لا يوجد سجل دفع لك حتى الآن</span>";
@@ -403,8 +420,6 @@
             document.getElementById('pBody').innerHTML = html;
             document.getElementById('emptyNote').style.display = data.length ? 'none' : 'block';
 
-            
-
         } catch (e) {
             console.error(e);
 
@@ -417,8 +432,6 @@
         }
     }
 
-   
-
     async function vote(status) {
         try {
             await fetch('/api/attendance/register', {
@@ -429,8 +442,16 @@
                     status: status
                 })
             });
+
             update();
-            showVotePopup(status === 'YES' ? 'تم تسجيل حضورك للمباراة' : 'تم تسجيل اعتذارك عن المباراة');
+
+            showVotePopup(
+                status === 'YES'
+                    ? 'تم تسجيل حضورك للمباراة'
+                    : 'تم تسجيل اعتذارك عن المباراة',
+                status
+            );
+
         } catch (e) {
             console.error(e);
             alert("حدث خطأ أثناء إرسال التصويت");
