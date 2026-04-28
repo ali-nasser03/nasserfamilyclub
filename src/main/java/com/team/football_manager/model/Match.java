@@ -14,5 +14,8 @@ public class Match {
 
     private String location;
     private LocalDateTime dateTime;
-    private boolean isActive; // لنعرف هل هي المباراة القادمة أم انتهت
+    private boolean isActive;
+
+    @Column(length = 1000)
+    private String note;
 }
