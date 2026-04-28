@@ -443,7 +443,26 @@
     }
 
     async function deletePlayer(id, name) {
-        const confirmation = prompt(`لحذف اللاعب "${name}" اكتب حذف`);
+    const confirmation = confirm(`هل تريد حذف اللاعب "${name}"؟`);
+
+    if (!confirmation) {
+        return;
+    }
+
+    const res = await fetch(`/api/users/delete/${id}`, {
+        method: 'DELETE'
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        alert(text);
+        return;
+    }
+
+    alert('تم حذف اللاعب');
+    load();
+}
 
         if (confirmation !== "حذف") {
             alert('تم إلغاء الحذف');
@@ -505,12 +524,12 @@
     }
 
     async function resetMonth() {
-        const confirmation = prompt('لتأكيد تصفير الدفع للجميع، اكتب كلمة: تصفير');
+        const confirmation = confirm('هل تريد تصفير الدفع للجميع؟');
 
-        if (confirmation !== "تصفير") {
+        if (!confirmation) {
             alert('تم إلغاء تصفير الدفع');
-            return;
-        }
+        return;
+    }
 
         await fetch('/api/attendance/reset-month', { method: 'POST' });
         alert('تم تصفير الدفع');
