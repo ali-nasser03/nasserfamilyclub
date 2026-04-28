@@ -385,7 +385,7 @@
                 clearBtn.disabled = true;
             } else {
                 document.getElementById('mInfo').innerHTML =
-                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}`;
+                `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T',' ')}<br>📝 ${m.note || ''}`;
 
                 yesBtn.disabled = false;
                 noBtn.disabled = false;
@@ -408,9 +408,11 @@
                     "<span style='color:#555'>لا يوجد سجل دفع لك حتى الآن</span>";
             }
 
-            const yes = data.filter(p => p.status.includes('✅'));
-            const no = data.filter(p => p.status.includes('❌'));
-            const wait = data.filter(p => !p.status.includes('✅') && !p.status.includes('❌'));
+            const sortByName = arr => arr.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+            
+            const yes = sortByName(data.filter(p => p.status.includes('✅')));
+            const no = sortByName(data.filter(p => p.status.includes('❌')));
+            const wait = sortByName(data.filter(p => !p.status.includes('✅') && !p.status.includes('❌')));
 
             let html = "";
             html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`).join('');
@@ -444,6 +446,7 @@
             });
 
             update();
+            
 
             showVotePopup(
                 status === 'YES'
