@@ -296,6 +296,9 @@
     <section class="page">
         <div class="table-container">
             <h3 class="table-title">📊 قائمة الحضور</h3>
+
+            <div id="playersCount" style="text-align:center;margin-bottom:10px;font-weight:bold;color:#2c3e50;"></div>
+
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -331,6 +334,10 @@
 <script>
     document.getElementById('pName').innerText = "كابتن " + fullName;
     document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
+
+    function sortByName(list) {
+        return [...list].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+    }
 
     function showVotePopup(message, status) {
         document.getElementById('votePopupText').innerText = message;
@@ -384,8 +391,10 @@
                 noBtn.disabled = true;
                 clearBtn.disabled = true;
             } else {
+                const noteHtml = m.note ? `<br>📝 ${m.note}` : "";
+
                 document.getElementById('mInfo').innerHTML =
-                `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T',' ')}<br>📝 ${m.note || ''}`;
+                    `📍 ${m.location}<br>⏰ ${String(m.dateTime).replace('T', ' ')}${noteHtml}`;
 
                 yesBtn.disabled = false;
                 noBtn.disabled = false;
@@ -408,11 +417,12 @@
                     "<span style='color:#555'>لا يوجد سجل دفع لك حتى الآن</span>";
             }
 
-            const sortByName = arr => arr.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
-            
             const yes = sortByName(data.filter(p => p.status.includes('✅')));
             const no = sortByName(data.filter(p => p.status.includes('❌')));
             const wait = sortByName(data.filter(p => !p.status.includes('✅') && !p.status.includes('❌')));
+
+            document.getElementById('playersCount').innerText =
+                `عدد الحضور الحالي: ${yes.length}`;
 
             let html = "";
             html += yes.map(p => `<tr><td>${p.name}</td><td style="color:green; font-weight:bold;">سأحضر ✅</td></tr>`).join('');
@@ -446,7 +456,6 @@
             });
 
             update();
-            
 
             showVotePopup(
                 status === 'YES'
