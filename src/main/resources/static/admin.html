@@ -9,15 +9,7 @@
         * {
             box-sizing: border-box;
         }
-<div id="confirmModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:16px;">
-    <div style="background:white; color:#2c3e50; width:100%; max-width:360px; border-radius:18px; padding:20px; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
-        <h3 id="confirmTitle" style="margin-top:0;">تأكيد</h3>
-        <p id="confirmMessage" style="line-height:1.7;"></p>
 
-        <button class="main-btn" id="confirmYesBtn">نعم</button>
-        <button class="warning-btn" onclick="closeConfirmModal()">إلغاء</button>
-    </div>
-</div>
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -175,6 +167,36 @@
             transform: scale(1.12);
         }
 
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-box {
+            background: white;
+            color: #2c3e50;
+            width: 100%;
+            max-width: 360px;
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        }
+
+        .modal-box h3 {
+            margin-top: 0;
+        }
+
+        .modal-box p {
+            line-height: 1.7;
+        }
+
         @media (max-width: 600px) {
             .header {
                 font-size: 18px;
@@ -268,8 +290,37 @@
 
 </div>
 
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="confirmTitle">تأكيد</h3>
+        <p id="confirmMessage"></p>
+        <button class="main-btn" id="confirmYesBtn">نعم</button>
+        <button class="warning-btn" onclick="closeConfirmModal()">إلغاء</button>
+    </div>
+</div>
+
 <script>
     const slider = document.getElementById('slider');
+    let pendingConfirmAction = null;
+
+    function openConfirmModal(title, message, action) {
+        pendingConfirmAction = action;
+        document.getElementById('confirmTitle').innerText = title;
+        document.getElementById('confirmMessage').innerText = message;
+        document.getElementById('confirmModal').style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+        pendingConfirmAction = null;
+        document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    document.getElementById('confirmYesBtn').onclick = async function () {
+        if (pendingConfirmAction) {
+            await pendingConfirmAction();
+        }
+        closeConfirmModal();
+    };
 
     function sortByName(list) {
         return [...list].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
@@ -449,48 +500,28 @@
         alert('تم تعديل بيانات اللاعب');
         load();
     }
-  let pendingConfirmAction = null;
-
-function openConfirmModal(title, message, action) {
-    pendingConfirmAction = action;
-    document.getElementById('confirmTitle').innerText = title;
-    document.getElementById('confirmMessage').innerText = message;
-    document.getElementById('confirmModal').style.display = 'flex';
-}
-
-function closeConfirmModal() {
-    pendingConfirmAction = null;
-    document.getElementById('confirmModal').style.display = 'none';
-}
-
-document.getElementById('confirmYesBtn').onclick = async function () {
-    if (pendingConfirmAction) {
-        await pendingConfirmAction();
-    }
-    closeConfirmModal();
-};
 
     async function deletePlayer(id, name) {
-    openConfirmModal(
-        'حذف لاعب',
-        `هل تريد حذف اللاعب "${name}"؟`,
-        async function () {
-            const res = await fetch(`/api/users/delete/${id}`, {
-                method: 'DELETE'
-            });
+        openConfirmModal(
+            'حذف لاعب',
+            `هل تريد حذف اللاعب "${name}"؟`,
+            async function () {
+                const res = await fetch(`/api/users/delete/${id}`, {
+                    method: 'DELETE'
+                });
 
-            const text = await res.text();
+                const text = await res.text();
 
-            if (!res.ok) {
-                alert(text);
-                return;
+                if (!res.ok) {
+                    alert(text);
+                    return;
+                }
+
+                alert('تم حذف اللاعب');
+                load();
             }
-
-            alert('تم حذف اللاعب');
-            load();
-        }
-    );
-}
+        );
+    }
 
     async function createNewMatch() {
         const location = document.getElementById('loc').value;
@@ -532,16 +563,16 @@ document.getElementById('confirmYesBtn').onclick = async function () {
     }
 
     async function resetMonth() {
-    openConfirmModal(
-        'تصفير الدفع',
-        'هل تريد تصفير الدفع للجميع؟',
-        async function () {
-            await fetch('/api/attendance/reset-month', { method: 'POST' });
-            alert('تم تصفير الدفع');
-            load();
-        }
-    );
-}
+        openConfirmModal(
+            'تصفير الدفع',
+            'هل تريد تصفير الدفع للجميع؟',
+            async function () {
+                await fetch('/api/attendance/reset-month', { method: 'POST' });
+                alert('تم تصفير الدفع');
+                load();
+            }
+        );
+    }
 
     window.onload = load;
 </script>
