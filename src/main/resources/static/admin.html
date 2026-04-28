@@ -543,7 +543,7 @@
             const res = await fetch('/api/matches/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ location, dateTime, active: true })
+                const note = prompt("ملاحظة:") || "";  body: JSON.stringify({ location, dateTime, note, active: true })
             });
 
             if (res.ok) {
