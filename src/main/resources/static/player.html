@@ -9,6 +9,14 @@
             box-sizing: border-box;
         }
 
+        <div id="votePopup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:white; color:#2c3e50; width:100%; max-width:330px; border-radius:18px; padding:20px; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
+        <h3 style="margin-top:0;">تم التصويت ✅</h3>
+        <p id="votePopupText" style="line-height:1.7;"></p>
+        <button class="btn btn-yes" onclick="closeVotePopup()">حسنًا</button>
+    </div>
+</div>
+
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -263,6 +271,7 @@
 <body>
 
 <script>
+    
     const fullName = localStorage.getItem('fullName');
     if (!fullName) {
         window.location.href = 'login.html';
@@ -323,6 +332,15 @@
 <script>
     document.getElementById('pName').innerText = "كابتن " + fullName;
     document.getElementById('playerHeader').innerText = "اللاعب: " + fullName;
+
+    function showVotePopup(message) {
+        document.getElementById('votePopupText').innerText = message;
+        document.getElementById('votePopup').style.display = 'flex';
+    }
+
+    function closeVotePopup() {
+        document.getElementById('votePopup').style.display = 'none';
+    }
 
     async function update() {
         try {
@@ -412,6 +430,7 @@
                 })
             });
             update();
+            showVotePopup(status === 'YES' ? 'تم تسجيل حضورك للمباراة' : 'تم تسجيل اعتذارك عن المباراة');
         } catch (e) {
             console.error(e);
             alert("حدث خطأ أثناء إرسال التصويت");
