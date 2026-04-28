@@ -528,40 +528,46 @@
         );
     }
 
-    async function createNewMatch() {
-        const location = document.getElementById('loc').value;
-        const dateTime = document.getElementById('dt').value;
+   async function createNewMatch() {
+    const location = document.getElementById('loc').value;
+    const dateTime = document.getElementById('dt').value;
 
-        if (!location || !dateTime) {
-            alert('عبئ المكان والوقت أولاً');
-            return;
-        }
-
-        if (confirm('نشر المباراة الجديدة؟')) {
-            await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
-
-            const res = await fetch('/api/matches/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                const note = prompt("ملاحظات؟):") || "";  body: JSON.stringify({ location, dateTime, note, active: true })
-            });
-
-            if (res.ok) {
-                alert('تم نشر المباراة وتجهيز القائمة ⚽');
-                document.getElementById('loc').value = '';
-                document.getElementById('dt').value = '';
-                load();
-
-                slider.scrollTo({
-                    left: slider.clientWidth,
-                    behavior: 'smooth'
-                });
-            } else {
-                alert('حدث خطأ أثناء نشر المباراة');
-            }
-        }
+    if (!location || !dateTime) {
+        alert('عبئ المكان والوقت أولاً');
+        return;
     }
 
+    const note = prompt("ملاحظة؟ :") || "";
+
+    if (confirm('نشر المباراة الجديدة؟')) {
+        await fetch('/api/attendance/reset-all-votes', { method: 'POST' });
+
+        const res = await fetch('/api/matches/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                location: location, 
+                dateTime: dateTime, 
+                note: note,
+                active: true 
+            })
+        });
+
+        if (res.ok) {
+            alert('تم نشر المباراة وتجهيز القائمة ⚽');
+            document.getElementById('loc').value = '';
+            document.getElementById('dt').value = '';
+            load();
+
+            slider.scrollTo({
+                left: slider.clientWidth,
+                behavior: 'smooth'
+            });
+        } else {
+            alert('حدث خطأ أثناء نشر المباراة');
+        }
+    }
+}
     async function toggle(id) {
         await fetch(`/api/attendance/toggle-payment/${id}`, { method: 'POST' });
         load();
