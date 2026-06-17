@@ -457,6 +457,7 @@
                 <div class="row" style="display:block;">
                     <input type="text" id="name-${p.id}" value="${p.fullName || ''}" placeholder="اسم اللاعب">
                     <input type="number" id="age-${p.id}" value="${p.age || 0}" placeholder="العمر">
+                    <input type="email" id="email-${p.id}" value="${p.email || ''}"  placeholder="البريد الإلكتروني">
 
                     <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                         <input type="checkbox" id="working-${p.id}" style="width:auto;margin:0;" ${p.working ? 'checked' : ''}>
@@ -474,6 +475,7 @@
         const fullName = document.getElementById(`name-${id}`).value.trim();
         const age = parseInt(document.getElementById(`age-${id}`).value, 10);
         const working = document.getElementById(`working-${id}`).checked;
+        const email = document.getElementById(`email-${id}`).value.trim();
 
         if (!fullName) {
             alert('اسم اللاعب مطلوب');
@@ -492,6 +494,7 @@
                 fullName,
                 age,
                 working
+                email,
             })
         });
 
