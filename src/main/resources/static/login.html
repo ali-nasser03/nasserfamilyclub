@@ -220,6 +220,7 @@
         <div class="small-hint">أدخل الاسم الثلاثي والعمر</div>
         <input type="text" id="registerName" placeholder="أدخل الاسم الثلاثي">
         <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
+        <input type="email" id="registerEmail" placeholder="البريد الإلكتروني">
 
         <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;color:#333;">
             <input type="checkbox" id="registerWorking" style="width:auto;margin:0;" checked>
@@ -275,7 +276,7 @@
             return;
         }
 
-        if (name === "Admin" || name === "محمود ناصر") {
+        if (name === "Admin") {
             showAdminPopup(name);
             return;
         }
@@ -336,6 +337,7 @@
         const name = normalizeName(rawName);
         const ageValue = document.getElementById('registerAge').value;
         const working = document.getElementById('registerWorking').checked;
+        const email = document.getElementById('registerEmail').value.trim();
 
         if (!name) {
             alert("يرجى إدخال الاسم الثلاثي");
@@ -344,6 +346,10 @@
 
         if (!ageValue) {
             alert("يرجى إدخال العمر");
+            return;
+        }
+        if (!email) {
+            alert("يرجى إدخال البريد الإلكتروني");
             return;
         }
 
@@ -362,6 +368,7 @@
                     fullName: name,
                     age: age,
                     working: working
+                    email: email,
                 })
             });
 
