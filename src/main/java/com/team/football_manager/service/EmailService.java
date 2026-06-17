@@ -23,7 +23,6 @@ public class EmailService {
     private final OkHttpClient client = new OkHttpClient();
 
     public void notifyPlayersAboutMatch(Match match) {
-
         List<User> players = userRepository.findAll()
                 .stream()
                 .filter(user -> !"ADMIN".equalsIgnoreCase(user.getRole()))
@@ -42,10 +41,13 @@ public class EmailService {
     }
 
     private void sendEmail(User player, Match match) throws IOException {
-
-        String note = match.getNote() == null
-                ? ""
+        String note = match.getNote() == null || match.getNote().isBlank()
+                ? "لا توجد ملاحظات"
                 : match.getNote();
+
+        String dateTime = match.getDateTime() == null
+                ? "-"
+                : match.getDateTime().toString().replace("T", " ");
 
         String body = """
                 مرحباً %s
@@ -64,22 +66,28 @@ public class EmailService {
                 .formatted(
                         player.getFullName(),
                         match.getLocation(),
-                        match.getDateTime(),
+                        dateTime,
                         note
                 );
 
-        String json = """
-                {
-                  "from":"Football Team <onboarding@resend.dev>",
-                  "to":["%s"],
-                  "subject":"⚽ مباراة جديدة",
-                  "text":"%s"
-                }
-                """
-                .formatted(
-                        player.getEmail(),
-                        body.replace("\"","'")
-                );
+        String safeBody = body
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "");
+
+        String safeEmail = player.getEmail()
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"");
+
+        String json = String.format(
+                "{\"from\":\"Football Team <onboarding@resend.dev>\"," +
+                        "\"to\":[\"%s\"]," +
+                        "\"subject\":\"مباراة جديدة ⚽\"," +
+                        "\"text\":\"%s\"}",
+                safeEmail,
+                safeBody
+        );
 
         Request request = new Request.Builder()
                 .url("https://api.resend.com/emails")
@@ -93,9 +101,10 @@ public class EmailService {
 
         Response response = client.newCall(request).execute();
 
-System.out.println("RESEND STATUS = " + response.code());
+        System.out.println("RESEND STATUS = " + response.code());
 
-if (response.body() != null) {
-    System.out.println(response.body().string());
-}    }
+        if (response.body() != null) {
+            System.out.println(response.body().string());
+        }
+    }
 }
