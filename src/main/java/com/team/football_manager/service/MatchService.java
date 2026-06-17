@@ -21,6 +21,9 @@ public class MatchService {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     private static final ZoneId PALESTINE_ZONE = ZoneId.of("Asia/Jerusalem");
 
     public Match createMatch(Match match) {
@@ -31,8 +34,16 @@ public class MatchService {
         matchRepository.saveAll(activeMatches);
 
         match.setActive(true);
-        return matchRepository.save(match);
-    }
+        Match savedMatch = matchRepository.save(match);
+        
+        try {
+            emailService.notifyPlayersAboutMatch(savedMatch);
+        } catch (Exception e) {
+            System.out.println("Email notification failed: " + e.getMessage());
+        }
+        
+        return savedMatch;
+            }
 
     public List<Match> getAllMatches() {
         return matchRepository.findAll();
