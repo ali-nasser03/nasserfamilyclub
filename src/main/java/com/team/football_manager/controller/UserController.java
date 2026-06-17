@@ -71,7 +71,8 @@ public class UserController {
             newUser.setAge(user.getAge());
             newUser.setRole("PLAYER");
             newUser.setPassword("");
-            newUser.setWorking(true);
+            newUser.setWorking(user.isWorking());
+            newUser.setPhoneNumber(user.getPhoneNumber());
 
             User saved = userRepository.save(newUser);
 
@@ -113,6 +114,7 @@ public class UserController {
                     map.put("fullName", user.getFullName());
                     map.put("age", user.getAge());
                     map.put("working", user.isWorking());
+                    map.put("phoneNumber", user.getPhoneNumber());
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -149,6 +151,7 @@ public class UserController {
         user.setUsername(fullName);
         user.setAge(updatedUser.getAge());
         user.setWorking(updatedUser.isWorking());
+        user.setPhoneNumber(updatedUser.getPhoneNumber());
 
         userRepository.save(user);
 
