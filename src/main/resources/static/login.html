@@ -257,6 +257,7 @@
         document.getElementById('registerAge').value = "";
         document.getElementById('registerWorking').checked = true;
         document.getElementById('registerPopup').style.display = "flex";
+        document.getElementById('registerEmail').value = "";
         setTimeout(() => document.getElementById('registerName').focus(), 50);
     }
 
@@ -265,6 +266,7 @@
         document.getElementById('registerAge').value = "";
         document.getElementById('registerWorking').checked = true;
         document.getElementById('registerPopup').style.display = "none";
+        document.getElementById('registerEmail').value = "";
     }
 
     async function login() {
@@ -367,8 +369,8 @@
                 body: JSON.stringify({
                     fullName: name,
                     age: age,
-                    working: working
-                    email: email,
+                    working: working,
+                    email: email
                 })
             });
 
