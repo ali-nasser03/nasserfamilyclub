@@ -20,6 +20,7 @@ public class User {
     private String role;
 
     private boolean working = true;
+    private String email;
 
     public Long getId() {
         return id;
@@ -71,5 +72,12 @@ public class User {
 
     public void setWorking(boolean working) {
         this.working = working;
+    }
+    public String getEmail() {
+    return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
