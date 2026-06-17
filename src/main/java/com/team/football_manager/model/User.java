@@ -20,7 +20,6 @@ public class User {
     private String role;
 
     private boolean working = true;
-    private String phoneNumber;
 
     public Long getId() {
         return id;
@@ -73,11 +72,4 @@ public class User {
     public void setWorking(boolean working) {
         this.working = working;
     }
-    public String getPhoneNumber() {
-    return phoneNumber;
-}
-
-public void setPhoneNumber(String phoneNumber) {
-    this.phoneNumber = phoneNumber;
-}
 }
