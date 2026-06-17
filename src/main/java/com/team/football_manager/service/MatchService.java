@@ -21,30 +21,17 @@ public class MatchService {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
-    @Autowired
-    private WhatsAppService whatsAppService;
-
     private static final ZoneId PALESTINE_ZONE = ZoneId.of("Asia/Jerusalem");
 
     public Match createMatch(Match match) {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-
         for (Match m : activeMatches) {
             m.setActive(false);
         }
-
         matchRepository.saveAll(activeMatches);
 
         match.setActive(true);
-        Match savedMatch = matchRepository.save(match);
-
-        try {
-            whatsAppService.notifyPlayersAboutMatch(savedMatch);
-        } catch (Exception e) {
-            System.out.println("WhatsApp notification failed: " + e.getMessage());
-        }
-
-        return savedMatch;
+        return matchRepository.save(match);
     }
 
     public List<Match> getAllMatches() {
@@ -53,11 +40,9 @@ public class MatchService {
 
     public Match getLatestActiveMatch() {
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-
         if (activeMatches.isEmpty()) {
             return null;
         }
-
         return activeMatches.get(0);
     }
 
@@ -65,20 +50,25 @@ public class MatchService {
     public void deactivateExpiredMatches() {
         LocalDateTime now = LocalDateTime.now(PALESTINE_ZONE);
 
+        System.out.println("🔥 SCHEDULER RUNNING...");
+        System.out.println("🕒 Palestine time now: " + now);
+
         List<Match> activeMatches = matchRepository.findByIsActiveTrue();
 
         for (Match match : activeMatches) {
+            System.out.println("📌 Checking match: " + match.getLocation() + " at " + match.getDateTime());
+
             if (match.getDateTime() != null && !match.getDateTime().isAfter(now)) {
                 match.setActive(false);
                 matchRepository.save(match);
 
                 List<Attendance> attendanceList = attendanceRepository.findByMatchId(match.getId());
-
                 for (Attendance attendance : attendanceList) {
-                    attendance.setStatus(null);
+                    attendance.setStatus(null); // تصفير التصويت فقط
                 }
-
                 attendanceRepository.saveAll(attendanceList);
+
+                System.out.println("✅ Match expired and votes reset: " + match.getLocation());
             }
         }
     }
