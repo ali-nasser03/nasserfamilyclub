@@ -93,6 +93,9 @@ public class EmailService {
 
         Response response = client.newCall(request).execute();
 
-        System.out.println(response.code());
-    }
+System.out.println("RESEND STATUS = " + response.code());
+
+if (response.body() != null) {
+    System.out.println(response.body().string());
+}    }
 }
