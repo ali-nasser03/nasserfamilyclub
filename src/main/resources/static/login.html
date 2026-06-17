@@ -220,9 +220,6 @@
         <div class="small-hint">أدخل الاسم الثلاثي والعمر</div>
         <input type="text" id="registerName" placeholder="أدخل الاسم الثلاثي">
         <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
-        <input type="text"
-       id="registerPhone"
-       placeholder="رقم الواتساب مثال 97059XXXXXXX">
 
         <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;color:#333;">
             <input type="checkbox" id="registerWorking" style="width:auto;margin:0;" checked>
@@ -259,7 +256,6 @@
         document.getElementById('registerAge').value = "";
         document.getElementById('registerWorking').checked = true;
         document.getElementById('registerPopup').style.display = "flex";
-        document.getElementById('registerPhone').value = "";
         setTimeout(() => document.getElementById('registerName').focus(), 50);
     }
 
@@ -268,7 +264,6 @@
         document.getElementById('registerAge').value = "";
         document.getElementById('registerWorking').checked = true;
         document.getElementById('registerPopup').style.display = "none";
-        document.getElementById('registerPhone').value = "";
     }
 
     async function login() {
@@ -341,7 +336,6 @@
         const name = normalizeName(rawName);
         const ageValue = document.getElementById('registerAge').value;
         const working = document.getElementById('registerWorking').checked;
-        const phone = document.getElementById('registerPhone').value.trim();
 
         if (!name) {
             alert("يرجى إدخال الاسم الثلاثي");
@@ -359,10 +353,6 @@
             alert("يرجى إدخال عمر صحيح");
             return;
         }
-        if (!phone) {
-            alert("أدخل رقم الواتساب");
-            return;
-        }
 
         try {
             const res = await fetch('/api/users/register', {
@@ -372,7 +362,6 @@
                     fullName: name,
                     age: age,
                     working: working
-                    phoneNumber: phone,
                 })
             });
 
