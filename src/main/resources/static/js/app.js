@@ -28,6 +28,7 @@ async function api(method, path, body, { allow401 = false } = {}) {
         res = await fetch(path, {
             method,
             credentials: 'same-origin',
+            cache: 'no-store',
             headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
             body: body !== undefined ? JSON.stringify(body) : undefined,
         });
@@ -43,7 +44,8 @@ async function api(method, path, body, { allow401 = false } = {}) {
 
     if (!res.ok) {
         if (res.status === 401 && !allow401) {
-            location.replace('login.html');
+            // "?out" tells the login page not to redirect again, so a stale session can never loop
+            location.replace('login.html?out');
         }
         throw new ApiError(res.status, data?.error || 'صار خطأ، جرّب مرة ثانية', data?.code);
     }

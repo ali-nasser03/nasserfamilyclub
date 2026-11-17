@@ -76,8 +76,10 @@
         location.replace(me.role === 'ADMIN' ? 'admin.html' : 'player.html');
     }
 
-    // Already signed in? Skip the form.
-    api('GET', '/api/auth/me', undefined, { allow401: true }).then(goHome).catch(() => {});
+    // Already signed in? Skip the form. Not when we were just sent here because the session ended.
+    if (!new URLSearchParams(location.search).has('out')) {
+        api('GET', '/api/auth/me', undefined, { allow401: true }).then(goHome).catch(() => {});
+    }
 
     document.getElementById('showRegister').onclick = () => {
         loginForm.hidden = true;

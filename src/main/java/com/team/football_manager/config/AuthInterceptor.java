@@ -17,6 +17,10 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // Never let a browser cache API answers. Safari on iPhone kept an old "signed in" answer
+        // after the server restarted, which bounced the login page back and forth.
+        response.setHeader("Cache-Control", "no-store");
+
         String path = request.getRequestURI().substring(request.getContextPath().length());
 
         if (path.startsWith("/api/auth/")) {
