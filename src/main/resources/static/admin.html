@@ -153,7 +153,8 @@
     const SITE_URL = location.origin + '/';
 
     function whatsappUrl(text) {
-        return 'https://wa.me/?text=' + encodeURIComponent(text);
+        // Direct link: the wa.me short link redirects here and garbles emojis on the way
+        return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text);
     }
 
     function setLink(id, text, enabled) {
