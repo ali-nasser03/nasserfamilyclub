@@ -28,10 +28,6 @@
         <button class="tab" role="tab" id="tab-players" aria-controls="view-players">اللاعبين</button>
     </div>
 
-    <div id="smsNotice" class="notice" hidden>
-        رسائل SMS مش مفعّلة لسا. ضيف إعدادات Twilio على السيرفر عشان توصل الرسائل للاعبين.
-    </div>
-
     <!-- ===================== Match ===================== -->
     <section id="view-match" role="tabpanel" aria-labelledby="tab-match">
         <div id="match"></div>
@@ -40,7 +36,12 @@
             <section class="panel">
                 <div id="tally"></div>
                 <div class="actions">
-                    <button class="btn gold" id="remindBtn">ذكّر اللي ما صوّتوا (SMS)</button>
+                    <a class="btn wa" id="waMatch" target="_blank" rel="noopener">شارك المباراة على الواتساب</a>
+                    <a class="btn wa-ghost" id="waRemind" target="_blank" rel="noopener">ذكّر اللي ما صوّتوا</a>
+                    <a class="btn wa-ghost" id="waComing" target="_blank" rel="noopener">شارك قائمة الجايين</a>
+                </div>
+                <div class="actions">
+                    <button class="btn gold" id="remindBtn" hidden>ذكّر اللي ما صوّتوا (SMS)</button>
                     <button class="btn danger" id="closeBtn">سكّر التصويت</button>
                 </div>
                 <div id="voteList"></div>
@@ -61,8 +62,8 @@
                 <span>ملاحظة (اختياري)</span>
                 <textarea class="input" id="mNote" maxlength="1000" placeholder="مثلاً: كل واحد يجيب مي"></textarea>
             </label>
-            <label class="check">
-                <input type="checkbox" id="mSms" checked>
+            <label class="check" id="mSmsRow" hidden>
+                <input type="checkbox" id="mSms">
                 <span>ابعث SMS لكل اللاعبين
                     <small>الملاحظة ما بتنبعث بالرسالة، بتظهر على الموقع بس</small>
                 </span>
@@ -133,7 +134,8 @@
     }
 
     function render() {
-        document.getElementById('smsNotice').hidden = overview.smsEnabled;
+        document.getElementById('mSmsRow').hidden = !overview.smsEnabled;
+        document.getElementById('remindBtn').hidden = !overview.smsEnabled;
         renderMatch();
         renderPayments();
         renderPlayers();
@@ -151,7 +153,81 @@
             document.getElementById('tally').innerHTML = tallyHtml(g);
             document.getElementById('voteList').innerHTML = voteListHtml(g, null);
             document.getElementById('remindBtn').disabled = g.wait.length === 0;
+            setLink('waMatch', newMatchText(match), true);
+            setLink('waRemind', reminderText(match, g.wait), g.wait.length > 0);
+            setLink('waComing', comingText(match, g.yes), g.yes.length > 0);
         }
+    }
+
+    // ---------------------------------------------------------------- WhatsApp sharing
+    // Opens WhatsApp with the message ready; the admin picks the family group and sends.
+    const SITE_URL = location.origin + '/';
+
+    function whatsappUrl(text) {
+        return 'https://wa.me/?text=' + encodeURIComponent(text);
+    }
+
+    function setLink(id, text, enabled) {
+        const a = document.getElementById(id);
+        a.href = whatsappUrl(text);
+        a.toggleAttribute('aria-disabled', !enabled);
+        a.tabIndex = enabled ? 0 : -1;
+    }
+
+    function whenText(match) {
+        return `${matchDay(match.dateTime)} الساعة ${matchTime(match.dateTime)}`;
+    }
+
+    function newMatchText(match) {
+        return [
+            '⚽ مباراة جديدة - نادي عائلة ناصر',
+            '',
+            `📅 ${whenText(match)}`,
+            `📍 ${match.location}`,
+            match.note ? `📝 ${match.note}` : null,
+            '',
+            'صوّتوا إذا جايين أو معتذرين 👇',
+            SITE_URL,
+        ].filter(line => line !== null).join('\n');
+    }
+
+    function reminderText(match, waiting) {
+        return [
+            `⏰ تذكير: مباراة ${whenText(match)}`,
+            '',
+            'لسا ما صوّتوا:',
+            ...waiting.map(p => `• ${p.name}`),
+            '',
+            'صوّتوا هون 👇',
+            SITE_URL,
+        ].join('\n');
+    }
+
+    function comingText(match, coming) {
+        return [
+            `✅ الجايين لمباراة ${whenText(match)} (${coming.length})`,
+            `📍 ${match.location}`,
+            '',
+            ...coming.map((p, i) => `${i + 1}. ${p.name}`),
+        ].join('\n');
+    }
+
+    /** After publishing: one tap to send the match to the family group. */
+    function shareAfterPublish(match) {
+        const dlg = document.createElement('dialog');
+        dlg.innerHTML = `
+            <h3>نشرنا المباراة</h3>
+            <p>ابعتها لغروب العيلة على الواتساب عشان الكل يعرف ويصوّت.</p>
+            <div class="actions">
+                <a class="btn wa" target="_blank" rel="noopener" href="${esc(whatsappUrl(newMatchText(match)))}">ابعت على الواتساب</a>
+                <button class="btn ghost" value="close">بعدين</button>
+            </div>`;
+        document.body.appendChild(dlg);
+        dlg.addEventListener('click', e => {
+            if (e.target.closest('a, button')) dlg.close();
+        });
+        dlg.addEventListener('close', () => dlg.remove());
+        dlg.showModal();
     }
 
     function smsSummary(result) {
@@ -175,7 +251,7 @@
             location: document.getElementById('mLocation').value.trim(),
             dateTime: document.getElementById('mDate').value,
             note: document.getElementById('mNote').value.trim(),
-            sendSms: document.getElementById('mSms').checked,
+            sendSms: !!overview?.smsEnabled && document.getElementById('mSms').checked,
         };
         if (!body.location) return toast('اكتب مكان المباراة', 'error');
         if (!body.dateTime) return toast('اختار موعد المباراة', 'error');
@@ -183,7 +259,7 @@
         const replacing = overview?.match
             ? ' المباراة الحالية رح تتسكّر وتصويتها بضل محفوظ.'
             : '';
-        const sms = body.sendSms ? ' ورح تنبعث رسالة SMS للاعبين.' : '';
+        const sms = body.sendSms && overview?.smsEnabled ? ' ورح تنبعث رسالة SMS للاعبين.' : '';
         if (!await confirmBox('نشر المباراة', `${body.location}، ${matchDay(body.dateTime)} الساعة ${matchTime(body.dateTime)}.${replacing}${sms}`, 'نشر المباراة')) return;
 
         const btn = document.getElementById('publishBtn');
@@ -191,10 +267,10 @@
         try {
             const result = await api('POST', '/api/admin/matches', body);
             e.target.reset();
-            document.getElementById('mSms').checked = true;
-            toast('نشرنا المباراة. ' + (body.sendSms ? smsSummary(result) : ''), 'ok');
+            if (body.sendSms) toast(smsSummary(result), 'ok');
             await load();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (overview.match) shareAfterPublish(overview.match);
         } catch (err) {
             toast(err.message, 'error');
         } finally {
@@ -281,7 +357,7 @@
         const all = [...overview.players].sort(byName);
         const missing = all.filter(p => !p.phone).length;
         const phoneNotice = document.getElementById('phoneNotice');
-        phoneNotice.hidden = missing === 0;
+        phoneNotice.hidden = missing === 0 || !overview.smsEnabled;
         phoneNotice.textContent = `${missing} لاعب ما إلهم رقم جوال، فما رح توصلهم رسائل. افتح اللاعب وضيف رقمه.`;
         document.getElementById('playerCount').textContent = `(${all.length})`;
 

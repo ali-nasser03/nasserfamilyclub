@@ -151,6 +151,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .btn.gold { background: var(--gold); color: var(--shield); }
 .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
 .btn.danger { background: transparent; color: var(--flag-red); border: 1.5px solid var(--flag-red); }
+.btn.wa { background: #157a3e; color: #fff; }
+.btn.wa-ghost { background: transparent; color: #157a3e; border: 1.5px solid #157a3e; }
+.btn[aria-disabled] { opacity: .45; pointer-events: none; }
 .btn.small { min-height: 38px; padding: 6px 12px; font-size: .9rem; }
 
 .link-btn {
