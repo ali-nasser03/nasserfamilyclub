@@ -9,7 +9,6 @@ import com.team.football_manager.repository.PaymentRepository;
 import com.team.football_manager.repository.UserRepository;
 import com.team.football_manager.util.ApiException;
 import com.team.football_manager.util.Names;
-import com.team.football_manager.util.PhoneNumbers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +32,6 @@ public class PlayerService {
 
         User user = new User();
         user.setFullName(name);
-        user.setPhone(PhoneNumbers.normalize(request.phone()));
         user.setAge(request.age());
         user.setWorking(request.working());
         user.setRole(Role.PLAYER);
@@ -47,7 +45,6 @@ public class PlayerService {
         ensureNameFree(name, id);
 
         user.setFullName(name);
-        user.setPhone(PhoneNumbers.normalizeOptional(request.phone()));
         user.setAge(request.age());
         user.setWorking(request.working());
     }

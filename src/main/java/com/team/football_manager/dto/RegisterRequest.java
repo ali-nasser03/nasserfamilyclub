@@ -11,8 +11,6 @@ public record RegisterRequest(
         @Size(max = 80, message = "الاسم طويل كثير")
         String fullName,
 
-        @NotBlank(message = "رقم الجوال مطلوب")
-        String phone,
 
         @Min(value = 5, message = "العمر غير صحيح")
         @Max(value = 99, message = "العمر غير صحيح")

@@ -1,6 +1,5 @@
 package com.team.football_manager.service;
 
-import com.team.football_manager.config.AppProperties;
 import com.team.football_manager.dto.*;
 import com.team.football_manager.model.Attendance;
 import com.team.football_manager.model.Match;
@@ -9,9 +8,6 @@ import com.team.football_manager.model.Vote;
 import com.team.football_manager.repository.AttendanceRepository;
 import com.team.football_manager.repository.MatchRepository;
 import com.team.football_manager.repository.UserRepository;
-import com.team.football_manager.sms.SmsMessage;
-import com.team.football_manager.sms.SmsService;
-import com.team.football_manager.sms.SmsTemplates;
 import com.team.football_manager.util.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,19 +31,15 @@ public class MatchService {
     private final AttendanceRepository attendance;
     private final UserRepository users;
     private final PaymentService payments;
-    private final SmsService sms;
     private final Clock clock;
-    private final AppProperties props;
 
     public MatchService(MatchRepository matches, AttendanceRepository attendance, UserRepository users,
-                        PaymentService payments, SmsService sms, Clock clock, AppProperties props) {
+                        PaymentService payments, Clock clock) {
         this.matches = matches;
         this.attendance = attendance;
         this.users = users;
         this.payments = payments;
-        this.sms = sms;
         this.clock = clock;
-        this.props = props;
     }
 
     public Optional<Match> currentMatch() {
@@ -58,7 +49,7 @@ public class MatchService {
     // ---------------------------------------------------------------- admin
 
     @Transactional
-    public SmsResult create(CreateMatchRequest request) {
+    public MatchDto create(CreateMatchRequest request) {
         if (!request.dateTime().isAfter(clock.now())) {
             throw ApiException.badRequest("موعد المباراة لازم يكون بالمستقبل");
         }
@@ -74,36 +65,7 @@ public class MatchService {
         match.setActive(true);
         matches.save(match);
 
-        if (!request.sendSms()) {
-            return new SmsResult(sms.isEnabled(), 0, 0);
-        }
-        String text = SmsTemplates.newMatch(match, props.publicUrlOrEmpty());
-        return sendToPlayers(users.findPlayers(), text);
-    }
-
-    /** Sends a reminder SMS to players who haven't voted on the open match. */
-    @Transactional(readOnly = true)
-    public SmsResult remindNonVoters() {
-        Match match = currentMatch().orElseThrow(() -> ApiException.badRequest("ما في مباراة منشورة"));
-        Set<Long> voted = attendance.findByMatch_Id(match.getId()).stream()
-                .map(a -> a.getPlayer().getId())
-                .collect(Collectors.toSet());
-
-        List<User> notVoted = users.findPlayers().stream()
-                .filter(Predicate.not(u -> voted.contains(u.getId())))
-                .toList();
-
-        return sendToPlayers(notVoted, SmsTemplates.reminder(match, props.publicUrlOrEmpty()));
-    }
-
-    private SmsResult sendToPlayers(List<User> recipients, String text) {
-        List<SmsMessage> messages = recipients.stream()
-                .filter(u -> u.getPhone() != null && !u.getPhone().isBlank())
-                .map(u -> new SmsMessage(u.getPhone(), u.getFullName(), text))
-                .toList();
-
-        sms.sendAll(messages);
-        return new SmsResult(sms.isEnabled(), messages.size(), recipients.size() - messages.size());
+        return MatchDto.from(match);
     }
 
     @Transactional
@@ -118,11 +80,11 @@ public class MatchService {
         Set<Long> paid = payments.paidPlayerIds(month);
 
         List<AdminOverview.Row> rows = users.findPlayers().stream()
-                .map(u -> new AdminOverview.Row(u.getId(), u.getFullName(), u.getPhone(), u.getAge(), u.isWorking(),
+                .map(u -> new AdminOverview.Row(u.getId(), u.getFullName(), u.getAge(), u.isWorking(),
                         votes.get(u.getId()), PaymentService.statusOf(u, paid)))
                 .toList();
 
-        return new AdminOverview(MatchDto.from(match), month, sms.isEnabled(), rows);
+        return new AdminOverview(MatchDto.from(match), month, rows);
     }
 
     // ---------------------------------------------------------------- players

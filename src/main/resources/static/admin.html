@@ -41,7 +41,6 @@
                     <a class="btn wa-ghost" id="waComing" target="_blank" rel="noopener">شارك قائمة الجايين</a>
                 </div>
                 <div class="actions">
-                    <button class="btn gold" id="remindBtn" hidden>ذكّر اللي ما صوّتوا (SMS)</button>
                     <button class="btn danger" id="closeBtn">سكّر التصويت</button>
                 </div>
                 <div id="voteList"></div>
@@ -62,12 +61,6 @@
                 <span>ملاحظة (اختياري)</span>
                 <textarea class="input" id="mNote" maxlength="1000" placeholder="مثلاً: كل واحد يجيب مي"></textarea>
             </label>
-            <label class="check" id="mSmsRow" hidden>
-                <input type="checkbox" id="mSms">
-                <span>ابعث SMS لكل اللاعبين
-                    <small>الملاحظة ما بتنبعث بالرسالة، بتظهر على الموقع بس</small>
-                </span>
-            </label>
             <button class="btn block" type="submit" id="publishBtn">نشر المباراة</button>
         </form>
     </section>
@@ -86,7 +79,6 @@
 
     <!-- ===================== Players ===================== -->
     <section id="view-players" role="tabpanel" aria-labelledby="tab-players" hidden>
-        <div id="phoneNotice" class="notice" hidden></div>
         <section class="panel">
             <div class="panel-head">
                 <h2>اللاعبين <span class="muted" id="playerCount"></span></h2>
@@ -134,8 +126,6 @@
     }
 
     function render() {
-        document.getElementById('mSmsRow').hidden = !overview.smsEnabled;
-        document.getElementById('remindBtn').hidden = !overview.smsEnabled;
         renderMatch();
         renderPayments();
         renderPlayers();
@@ -152,7 +142,6 @@
             const g = groupVotes(overview.players);
             document.getElementById('tally').innerHTML = tallyHtml(g);
             document.getElementById('voteList').innerHTML = voteListHtml(g, null);
-            document.getElementById('remindBtn').disabled = g.wait.length === 0;
             setLink('waMatch', newMatchText(match), true);
             setLink('waRemind', reminderText(match, g.wait), g.wait.length > 0);
             setLink('waComing', comingText(match, g.yes), g.yes.length > 0);
@@ -230,13 +219,6 @@
         dlg.showModal();
     }
 
-    function smsSummary(result) {
-        if (!result.smsEnabled) return 'الرسائل ما انبعثت لأنه SMS مش مفعّل';
-        let text = `رح تنبعث رسالة لـ ${result.recipients} لاعب`;
-        if (result.missingPhone) text += `، و${result.missingPhone} ما إلهم رقم`;
-        return text;
-    }
-
     function setMinDate() {
         const d = new Date(Date.now() + 5 * 60000);
         const pad = n => String(n).padStart(2, '0');
@@ -251,7 +233,6 @@
             location: document.getElementById('mLocation').value.trim(),
             dateTime: document.getElementById('mDate').value,
             note: document.getElementById('mNote').value.trim(),
-            sendSms: !!overview?.smsEnabled && document.getElementById('mSms').checked,
         };
         if (!body.location) return toast('اكتب مكان المباراة', 'error');
         if (!body.dateTime) return toast('اختار موعد المباراة', 'error');
@@ -259,15 +240,13 @@
         const replacing = overview?.match
             ? ' المباراة الحالية رح تتسكّر وتصويتها بضل محفوظ.'
             : '';
-        const sms = body.sendSms && overview?.smsEnabled ? ' ورح تنبعث رسالة SMS للاعبين.' : '';
-        if (!await confirmBox('نشر المباراة', `${body.location}، ${matchDay(body.dateTime)} الساعة ${matchTime(body.dateTime)}.${replacing}${sms}`, 'نشر المباراة')) return;
+        if (!await confirmBox('نشر المباراة', `${body.location}، ${matchDay(body.dateTime)} الساعة ${matchTime(body.dateTime)}.${replacing}`, 'نشر المباراة')) return;
 
         const btn = document.getElementById('publishBtn');
         btn.disabled = true;
         try {
-            const result = await api('POST', '/api/admin/matches', body);
+            await api('POST', '/api/admin/matches', body);
             e.target.reset();
-            if (body.sendSms) toast(smsSummary(result), 'ok');
             await load();
             window.scrollTo({ top: 0, behavior: 'smooth' });
             if (overview.match) shareAfterPublish(overview.match);
@@ -277,16 +256,6 @@
             btn.disabled = false;
         }
     });
-
-    document.getElementById('remindBtn').onclick = async () => {
-        const waiting = overview.players.filter(p => !p.vote).length;
-        if (!await confirmBox('تذكير', `رح نبعث SMS لـ ${waiting} لاعب لسا ما صوّتوا.`, 'ابعث التذكير')) return;
-        try {
-            toast(smsSummary(await api('POST', '/api/admin/matches/current/remind')), 'ok');
-        } catch (err) {
-            toast(err.message, 'error');
-        }
-    };
 
     document.getElementById('closeBtn').onclick = async () => {
         if (!await confirmBox('سكّر التصويت', 'اللاعبين ما رح يقدروا يصوّتوا بعد هيك. التصويت الحالي بضل محفوظ.', 'سكّر التصويت', true)) return;
@@ -355,10 +324,6 @@
 
     function renderPlayers() {
         const all = [...overview.players].sort(byName);
-        const missing = all.filter(p => !p.phone).length;
-        const phoneNotice = document.getElementById('phoneNotice');
-        phoneNotice.hidden = missing === 0 || !overview.smsEnabled;
-        phoneNotice.textContent = `${missing} لاعب ما إلهم رقم جوال، فما رح توصلهم رسائل. افتح اللاعب وضيف رقمه.`;
         document.getElementById('playerCount').textContent = `(${all.length})`;
 
         const q = searchInput.value.trim();
@@ -368,7 +333,7 @@
             <div class="player-row ${openEditor === p.id ? 'open' : ''}">
                 <button type="button" data-open="${p.id}" aria-expanded="${openEditor === p.id}">
                     <span class="name">${esc(p.name)}</span>
-                    ${p.phone ? `<span class="phone">${esc(p.phone)}</span>` : '<span class="pill unpaid">بدون رقم</span>'}
+                    ${p.working ? '' : '<span class="pill exempt">معفي</span>'}
                 </button>
                 ${openEditor === p.id ? editorHtml(p) : ''}
             </div>`).join('') : '<p class="muted">ما في نتائج</p>';
@@ -379,12 +344,8 @@
             <form data-edit="${p.id}" novalidate>
                 <label class="field"><span>الاسم</span>
                     <input class="input" name="fullName" value="${esc(p.name)}" maxlength="80" required></label>
-                <div class="grid-2">
-                    <label class="field"><span>رقم الجوال</span>
-                        <input class="input" name="phone" type="tel" dir="ltr" value="${esc(p.phone || '')}" placeholder="059xxxxxxx"></label>
-                    <label class="field"><span>العمر</span>
-                        <input class="input" name="age" type="number" min="5" max="99" value="${p.age || ''}"></label>
-                </div>
+                <label class="field"><span>العمر</span>
+                    <input class="input" name="age" type="number" min="5" max="99" value="${p.age || ''}"></label>
                 <label class="check"><input type="checkbox" name="working" ${p.working ? 'checked' : ''}>
                     <span>بشتغل <small>شيلها إذا اللاعب معفي من الاشتراك</small></span></label>
                 <div class="actions">
@@ -426,7 +387,6 @@
         const id = Number(form.dataset.edit);
         const body = {
             fullName: form.fullName.value.trim(),
-            phone: form.phone.value.trim(),
             age: parseInt(form.age.value, 10) || 0,
             working: form.working.checked,
         };

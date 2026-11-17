@@ -13,10 +13,6 @@ public class User {
     @Column(name = "full_name", nullable = false, unique = true)
     private String fullName;
 
-    /** International format, e.g. +970591234567. Used for SMS. */
-    @Column(length = 20)
-    private String phone;
-
     private int age;
 
     @Enumerated(EnumType.STRING)
@@ -55,14 +51,6 @@ public class User {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     public int getAge() {

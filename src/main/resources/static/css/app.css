@@ -379,7 +379,6 @@ textarea.input { min-height: 84px; resize: vertical; }
     text-align: right;
     cursor: pointer;
 }
-.player-row .phone { direction: ltr; color: var(--muted); font-size: .88rem; }
 .player-row form { padding: 4px 2px 16px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 

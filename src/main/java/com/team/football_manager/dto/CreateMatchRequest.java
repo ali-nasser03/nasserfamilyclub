@@ -15,8 +15,6 @@ public record CreateMatchRequest(
         LocalDateTime dateTime,
 
         @Size(max = 1000, message = "الملاحظة طويلة كثير")
-        String note,
-
-        boolean sendSms
+        String note
 ) {
 }

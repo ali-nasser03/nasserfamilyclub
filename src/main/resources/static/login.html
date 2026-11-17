@@ -46,13 +46,6 @@
             </label>
 
             <label class="field">
-                <span>رقم الجوال</span>
-                <input class="input" id="regPhone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel"
-                       placeholder="059xxxxxxx" required>
-                <small>بتوصلك عليه رسالة لما تنزل مباراة جديدة</small>
-            </label>
-
-            <label class="field">
                 <span>العمر</span>
                 <input class="input" id="regAge" type="number" inputmode="numeric" min="5" max="99" required>
             </label>
@@ -135,13 +128,11 @@
         e.preventDefault();
         const body = {
             fullName: document.getElementById('regName').value.trim(),
-            phone: document.getElementById('regPhone').value.trim(),
             age: parseInt(document.getElementById('regAge').value, 10) || 0,
             working: document.getElementById('regWorking').checked,
         };
 
         if (!body.fullName) return toast('اكتب اسمك الثلاثي', 'error');
-        if (!body.phone) return toast('اكتب رقم جوالك', 'error');
         if (body.age < 5 || body.age > 99) return toast('اكتب عمرك', 'error');
 
         const btn = document.getElementById('registerBtn');

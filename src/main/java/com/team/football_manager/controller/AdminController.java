@@ -34,13 +34,8 @@ public class AdminController {
     // ---------- matches
 
     @PostMapping("/matches")
-    public SmsResult createMatch(@Valid @RequestBody CreateMatchRequest body) {
+    public MatchDto createMatch(@Valid @RequestBody CreateMatchRequest body) {
         return matches.create(body);
-    }
-
-    @PostMapping("/matches/current/remind")
-    public SmsResult remind() {
-        return matches.remindNonVoters();
     }
 
     @DeleteMapping("/matches/current")
