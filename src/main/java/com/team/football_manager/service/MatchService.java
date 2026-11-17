@@ -1,86 +1,184 @@
 package com.team.football_manager.service;
 
+import com.team.football_manager.config.AppProperties;
+import com.team.football_manager.dto.*;
 import com.team.football_manager.model.Attendance;
 import com.team.football_manager.model.Match;
+import com.team.football_manager.model.User;
+import com.team.football_manager.model.Vote;
 import com.team.football_manager.repository.AttendanceRepository;
 import com.team.football_manager.repository.MatchRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.team.football_manager.repository.UserRepository;
+import com.team.football_manager.sms.SmsMessage;
+import com.team.football_manager.sms.SmsService;
+import com.team.football_manager.sms.SmsTemplates;
+import com.team.football_manager.util.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Service
 public class MatchService {
 
-    @Autowired
-    private MatchRepository matchRepository;
+    private static final Logger log = LoggerFactory.getLogger(MatchService.class);
 
-    @Autowired
-    private AttendanceRepository attendanceRepository;
+    private final MatchRepository matches;
+    private final AttendanceRepository attendance;
+    private final UserRepository users;
+    private final PaymentService payments;
+    private final SmsService sms;
+    private final Clock clock;
+    private final AppProperties props;
 
-    @Autowired
-    private EmailService emailService;
+    public MatchService(MatchRepository matches, AttendanceRepository attendance, UserRepository users,
+                        PaymentService payments, SmsService sms, Clock clock, AppProperties props) {
+        this.matches = matches;
+        this.attendance = attendance;
+        this.users = users;
+        this.payments = payments;
+        this.sms = sms;
+        this.clock = clock;
+        this.props = props;
+    }
 
-    private static final ZoneId PALESTINE_ZONE = ZoneId.of("Asia/Jerusalem");
+    public Optional<Match> currentMatch() {
+        return matches.findFirstByActiveTrueOrderByDateTimeDesc();
+    }
 
-    public Match createMatch(Match match) {
-        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        for (Match m : activeMatches) {
-            m.setActive(false);
+    // ---------------------------------------------------------------- admin
+
+    @Transactional
+    public SmsResult create(CreateMatchRequest request) {
+        if (!request.dateTime().isAfter(clock.now())) {
+            throw ApiException.badRequest("موعد المباراة لازم يكون بالمستقبل");
         }
-        matchRepository.saveAll(activeMatches);
 
+        // Only one open match at a time. Old matches keep their votes as history.
+        List<Match> open = matches.findByActiveTrue();
+        open.forEach(m -> m.setActive(false));
+
+        Match match = new Match();
+        match.setLocation(request.location().trim());
+        match.setDateTime(request.dateTime());
+        match.setNote(request.note() == null || request.note().isBlank() ? null : request.note().trim());
         match.setActive(true);
-        Match savedMatch = matchRepository.save(match);
-        
-        try {
-            emailService.notifyPlayersAboutMatch(savedMatch);
-        } catch (Exception e) {
-            System.out.println("Email notification failed: " + e.getMessage());
-        }
-        
-        return savedMatch;
-            }
+        matches.save(match);
 
-    public List<Match> getAllMatches() {
-        return matchRepository.findAll();
+        if (!request.sendSms()) {
+            return new SmsResult(sms.isEnabled(), 0, 0);
+        }
+        String text = SmsTemplates.newMatch(match, props.publicUrlOrEmpty());
+        return sendToPlayers(users.findPlayers(), text);
     }
 
-    public Match getLatestActiveMatch() {
-        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
-        if (activeMatches.isEmpty()) {
-            return null;
-        }
-        return activeMatches.get(0);
+    /** Sends a reminder SMS to players who haven't voted on the open match. */
+    @Transactional(readOnly = true)
+    public SmsResult remindNonVoters() {
+        Match match = currentMatch().orElseThrow(() -> ApiException.badRequest("ما في مباراة منشورة"));
+        Set<Long> voted = attendance.findByMatch_Id(match.getId()).stream()
+                .map(a -> a.getPlayer().getId())
+                .collect(Collectors.toSet());
+
+        List<User> notVoted = users.findPlayers().stream()
+                .filter(Predicate.not(u -> voted.contains(u.getId())))
+                .toList();
+
+        return sendToPlayers(notVoted, SmsTemplates.reminder(match, props.publicUrlOrEmpty()));
     }
 
-    @Scheduled(fixedRate = 10000)
-    public void deactivateExpiredMatches() {
-        LocalDateTime now = LocalDateTime.now(PALESTINE_ZONE);
+    private SmsResult sendToPlayers(List<User> recipients, String text) {
+        List<SmsMessage> messages = recipients.stream()
+                .filter(u -> u.getPhone() != null && !u.getPhone().isBlank())
+                .map(u -> new SmsMessage(u.getPhone(), u.getFullName(), text))
+                .toList();
 
-        System.out.println("🔥 SCHEDULER RUNNING...");
-        System.out.println("🕒 Palestine time now: " + now);
+        sms.sendAll(messages);
+        return new SmsResult(sms.isEnabled(), messages.size(), recipients.size() - messages.size());
+    }
 
-        List<Match> activeMatches = matchRepository.findByIsActiveTrue();
+    @Transactional
+    public void closeCurrent() {
+        matches.findByActiveTrue().forEach(m -> m.setActive(false));
+    }
 
-        for (Match match : activeMatches) {
-            System.out.println("📌 Checking match: " + match.getLocation() + " at " + match.getDateTime());
+    @Transactional(readOnly = true)
+    public AdminOverview adminOverview(String month) {
+        Match match = currentMatch().orElse(null);
+        Map<Long, Vote> votes = votesOf(match);
+        Set<Long> paid = payments.paidPlayerIds(month);
 
-            if (match.getDateTime() != null && !match.getDateTime().isAfter(now)) {
-                match.setActive(false);
-                matchRepository.save(match);
+        List<AdminOverview.Row> rows = users.findPlayers().stream()
+                .map(u -> new AdminOverview.Row(u.getId(), u.getFullName(), u.getPhone(), u.getAge(), u.isWorking(),
+                        votes.get(u.getId()), PaymentService.statusOf(u, paid)))
+                .toList();
 
-                List<Attendance> attendanceList = attendanceRepository.findByMatchId(match.getId());
-                for (Attendance attendance : attendanceList) {
-                    attendance.setStatus(null); // تصفير التصويت فقط
-                }
-                attendanceRepository.saveAll(attendanceList);
+        return new AdminOverview(MatchDto.from(match), month, sms.isEnabled(), rows);
+    }
 
-                System.out.println("✅ Match expired and votes reset: " + match.getLocation());
-            }
+    // ---------------------------------------------------------------- players
+
+    @Transactional(readOnly = true)
+    public BoardResponse board(User me, String month) {
+        Match match = currentMatch().orElse(null);
+        Map<Long, Vote> votes = votesOf(match);
+
+        List<BoardResponse.Entry> entries = users.findPlayers().stream()
+                .map(u -> new BoardResponse.Entry(u.getId(), u.getFullName(), votes.get(u.getId())))
+                .toList();
+
+        Set<Long> paid = payments.paidPlayerIds(month);
+        BoardResponse.Me myStatus = new BoardResponse.Me(me.getId(), me.getFullName(),
+                votes.get(me.getId()), PaymentService.statusOf(me, paid));
+
+        return new BoardResponse(MatchDto.from(match), month, entries, myStatus);
+    }
+
+    @Transactional
+    public void vote(User player, Vote vote) {
+        Match match = currentMatch().orElseThrow(() -> ApiException.badRequest("التصويت مسكّر، ما في مباراة منشورة"));
+
+        Attendance row = attendance.findByMatch_IdAndPlayer_Id(match.getId(), player.getId())
+                .orElseGet(() -> new Attendance(users.getReferenceById(player.getId()), match, vote));
+        row.setStatus(vote);
+        attendance.save(row);
+    }
+
+    @Transactional
+    public void clearVote(User player) {
+        currentMatch().flatMap(m -> attendance.findByMatch_IdAndPlayer_Id(m.getId(), player.getId()))
+                .ifPresent(attendance::delete);
+    }
+
+    private Map<Long, Vote> votesOf(Match match) {
+        if (match == null) {
+            return Map.of();
+        }
+        return attendance.findByMatch_Id(match.getId()).stream()
+                .filter(a -> a.getStatus() != null)
+                .collect(Collectors.toMap(a -> a.getPlayer().getId(), Attendance::getStatus, (a, b) -> b));
+    }
+
+    // ---------------------------------------------------------------- scheduler
+
+    /** Voting closes automatically when the match starts. Votes are kept as history. */
+    @Scheduled(fixedDelay = 60_000, initialDelay = 30_000)
+    @Transactional
+    public void closeStartedMatches() {
+        LocalDateTime now = clock.now();
+        List<Match> started = matches.findByActiveTrueAndDateTimeLessThanEqual(now);
+        for (Match match : started) {
+            match.setActive(false);
+            log.info("Voting closed for match {} ({} at {})", match.getId(), match.getLocation(), match.getDateTime());
         }
     }
 }

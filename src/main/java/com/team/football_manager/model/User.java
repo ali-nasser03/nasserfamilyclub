@@ -10,44 +10,43 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String username;
-    private int age;
-    private String password;
-
-    @Column(name = "full_name")
+    @Column(name = "full_name", nullable = false, unique = true)
     private String fullName;
 
-    private String role;
+    /** International format, e.g. +970591234567. Used for SMS. */
+    @Column(length = 20)
+    private String phone;
 
+    private int age;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Role role = Role.PLAYER;
+
+    /** Players who work pay the monthly fee; the rest are exempt. */
     private boolean working = true;
-    private String email;
+
+    /** BCrypt hash. Only used for the admin account. */
+    @Column(name = "password")
+    private String passwordHash;
+
+    public User() {
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
+
+    public boolean isExemptFromPayment() {
+        return !working;
+    }
 
     public Long getId() {
         return id;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getFullName() {
@@ -58,11 +57,27 @@ public class User {
         this.fullName = fullName;
     }
 
-    public String getRole() {
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
@@ -73,11 +88,12 @@ public class User {
     public void setWorking(boolean working) {
         this.working = working;
     }
-    public String getEmail() {
-    return email;
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }

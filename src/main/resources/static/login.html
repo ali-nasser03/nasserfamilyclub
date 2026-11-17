@@ -2,394 +2,159 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دخول الفريق</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f2f4f7;
-            background-image:
-                linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)),
-                url('logo.jpg');
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        .login-card {
-            background-color: rgba(255,255,255,0.96);
-            width: 100%;
-            max-width: 430px;
-            padding: 28px 20px;
-            border-radius: 26px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.14);
-            text-align: center;
-            border: 1px solid #eee;
-        }
-
-        .logo {
-            width: 140px;
-            max-width: 55%;
-            height: auto;
-            display: block;
-            margin: 0 auto 16px auto;
-        }
-
-        h1 {
-            margin: 0 0 14px;
-            font-size: 2rem;
-            color: #111;
-        }
-
-        .hint {
-            color: #333;
-            font-size: 1rem;
-            line-height: 1.7;
-            margin-bottom: 22px;
-        }
-
-        input {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 14px;
-            border: 1px solid #d8d8d8;
-            border-radius: 14px;
-            font-size: 1.05rem;
-            text-align: center;
-            background: #fff;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 12px;
-            border: none;
-            border-radius: 14px;
-            font-size: 1.05rem;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            transition: 0.25s;
-        }
-
-        .btn-login {
-            background: #0f6a27;
-        }
-
-        .btn-login:hover {
-            background: #0b541e;
-        }
-
-        .btn-register {
-            background: #0b4d90;
-        }
-
-        .btn-register:hover {
-            background: #083d72;
-        }
-
-        .btn-confirm {
-            background: #007bff;
-        }
-
-        .btn-confirm:hover {
-            background: #0069d9;
-        }
-
-        .btn-cancel {
-            background: #6c757d;
-        }
-
-        .btn-cancel:hover {
-            background: #5b636a;
-        }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-
-        .modal-box {
-            background-color: rgba(255,255,255,0.98);
-            width: 100%;
-            max-width: 390px;
-            padding: 22px 18px;
-            border-radius: 22px;
-            box-shadow: 0 14px 35px rgba(0,0,0,0.28);
-            text-align: center;
-            border: 1px solid #eee;
-        }
-
-        .modal-box h2 {
-            margin: 0 0 16px;
-            color: #111;
-            font-size: 1.35rem;
-        }
-
-        .modal-box .small-hint {
-            color: #444;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 14px;
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 12px;
-                background-size: 85%;
-            }
-
-            .login-card {
-                padding: 22px 16px;
-                border-radius: 20px;
-            }
-
-            .logo {
-                width: 105px;
-                max-width: 48%;
-            }
-
-            h1 {
-                font-size: 1.7rem;
-            }
-
-            .hint {
-                font-size: 0.95rem;
-            }
-
-            input,
-            .btn {
-                font-size: 1rem;
-                padding: 13px;
-            }
-
-            .modal-box {
-                border-radius: 20px;
-                padding: 20px 16px;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#161616">
+    <title>نادي عائلة ناصر</title>
+    <link rel="icon" href="logo.jpg">
+    <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 
-<div class="login-card">
-    <img src="logo.jpg" alt="شعار الفريق" class="logo">
+<main class="auth">
+    <div class="auth-card">
+        <img class="crest" src="logo.jpg" alt="شعار عائلة محمود ناصر">
+        <h1>نادي عائلة ناصر</h1>
 
-    <h1>دخول الفريق</h1>
+        <!-- Sign in -->
+        <form id="loginForm" class="panel" novalidate>
+            <label class="field">
+                <span>اسمك الثلاثي</span>
+                <input class="input" id="loginName" autocomplete="name" required>
+                <small>نفس الاسم اللي سجّلت فيه</small>
+            </label>
 
-    <div class="hint">
-        الدخول يكون بالاسم الكامل، والتسجيل أول مرة بالاسم والعمر
+            <label class="field" id="passwordField" hidden>
+                <span>كلمة سر الإدارة</span>
+                <input class="input" id="loginPassword" type="password" autocomplete="current-password">
+            </label>
+
+            <button class="btn block" type="submit" id="loginBtn">دخول</button>
+
+            <p class="center" style="margin:14px 0 0">
+                أول مرة؟
+                <button type="button" class="link-btn" id="showRegister">سجّل كلاعب جديد</button>
+            </p>
+        </form>
+
+        <!-- Register -->
+        <form id="registerForm" class="panel" novalidate hidden>
+            <h2>تسجيل لاعب جديد</h2>
+
+            <label class="field">
+                <span>الاسم الثلاثي</span>
+                <input class="input" id="regName" autocomplete="name" required maxlength="80">
+            </label>
+
+            <label class="field">
+                <span>رقم الجوال</span>
+                <input class="input" id="regPhone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel"
+                       placeholder="059xxxxxxx" required>
+                <small>بتوصلك عليه رسالة لما تنزل مباراة جديدة</small>
+            </label>
+
+            <label class="field">
+                <span>العمر</span>
+                <input class="input" id="regAge" type="number" inputmode="numeric" min="5" max="99" required>
+            </label>
+
+            <label class="check">
+                <input type="checkbox" id="regWorking" checked>
+                <span>بشتغل
+                    <small>اللي بشتغل بدفع الاشتراك الشهري، الطلاب معفيين</small>
+                </span>
+            </label>
+
+            <button class="btn block" type="submit" id="registerBtn">سجّلني</button>
+
+            <p class="center" style="margin:14px 0 0">
+                <button type="button" class="link-btn" id="showLogin">عندي حساب، بدي أدخل</button>
+            </p>
+        </form>
     </div>
+</main>
 
-    <div id="loginSection">
-        <input type="text" id="username" placeholder="أدخل اسمك الكامل">
-        <button class="btn btn-login" onclick="login()">دخول</button>
-        <button class="btn btn-register" onclick="showRegisterPopup()">تسجيل لاعب جديد</button>
-    </div>
-</div>
-
-<div id="adminPopup" class="modal-overlay">
-    <div class="modal-box">
-        <h2>كلمة سر الأدمن</h2>
-        <div class="small-hint">أدخل كلمة السر للانتقال إلى غرفة العمليات</div>
-        <input type="password" id="adminPassword" placeholder="كلمة السر">
-        <button class="btn btn-confirm" onclick="adminLogin()">دخول الأدمن</button>
-        <button class="btn btn-cancel" onclick="hideAdminPopup()">إلغاء</button>
-    </div>
-</div>
-
-<div id="registerPopup" class="modal-overlay">
-    <div class="modal-box">
-        <h2>تسجيل لاعب جديد</h2>
-        <div class="small-hint">أدخل الاسم الثلاثي والعمر</div>
-        <input type="text" id="registerName" placeholder="أدخل الاسم الثلاثي">
-        <input type="number" id="registerAge" placeholder="أدخل العمر" min="1">
-        <input type="email" id="registerEmail" placeholder="البريد الإلكتروني">
-
-        <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;color:#333;">
-            <input type="checkbox" id="registerWorking" style="width:auto;margin:0;" checked>
-            <span>بشتغل</span>
-        </label>
-
-        <button class="btn btn-confirm" onclick="registerPlayer()">تأكيد التسجيل</button>
-        <button class="btn btn-cancel" onclick="hideRegisterPopup()">إلغاء</button>
-    </div>
-</div>
-
+<script src="js/app.js"></script>
 <script>
-    let pendingAdminName = "";
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const passwordField = document.getElementById('passwordField');
 
-    function normalizeName(name) {
-        return name.trim().replace(/\s+/g, ' ');
+    function goHome(me) {
+        location.replace(me.role === 'ADMIN' ? 'admin.html' : 'player.html');
     }
 
-    function showAdminPopup(name) {
-        pendingAdminName = name;
-        document.getElementById('adminPassword').value = "";
-        document.getElementById('adminPopup').style.display = "flex";
-        setTimeout(() => document.getElementById('adminPassword').focus(), 50);
-    }
+    // Already signed in? Skip the form.
+    api('GET', '/api/auth/me', undefined, { allow401: true }).then(goHome).catch(() => {});
 
-    function hideAdminPopup() {
-        pendingAdminName = "";
-        document.getElementById('adminPassword').value = "";
-        document.getElementById('adminPopup').style.display = "none";
-    }
+    document.getElementById('showRegister').onclick = () => {
+        loginForm.hidden = true;
+        registerForm.hidden = false;
+        document.getElementById('regName').value = document.getElementById('loginName').value;
+        document.getElementById('regName').focus();
+    };
 
-    function showRegisterPopup() {
-        document.getElementById('registerName').value = "";
-        document.getElementById('registerAge').value = "";
-        document.getElementById('registerWorking').checked = true;
-        document.getElementById('registerPopup').style.display = "flex";
-        document.getElementById('registerEmail').value = "";
-        setTimeout(() => document.getElementById('registerName').focus(), 50);
-    }
+    document.getElementById('showLogin').onclick = () => {
+        registerForm.hidden = true;
+        loginForm.hidden = false;
+        document.getElementById('loginName').focus();
+    };
 
-    function hideRegisterPopup() {
-        document.getElementById('registerName').value = "";
-        document.getElementById('registerAge').value = "";
-        document.getElementById('registerWorking').checked = true;
-        document.getElementById('registerPopup').style.display = "none";
-        document.getElementById('registerEmail').value = "";
-    }
+    // Typing a different name hides the admin password field again
+    document.getElementById('loginName').addEventListener('input', () => {
+        passwordField.hidden = true;
+        document.getElementById('loginPassword').value = '';
+    });
 
-    async function login() {
-        const rawName = document.getElementById('username').value;
-        const name = normalizeName(rawName);
-
+    loginForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const name = document.getElementById('loginName').value.trim();
+        const password = document.getElementById('loginPassword').value;
         if (!name) {
-            alert("يرجى إدخال الاسم");
+            toast('اكتب اسمك', 'error');
             return;
         }
 
-        if (name === "Admin") {
-            showAdminPopup(name);
-            return;
-        }
-
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true;
         try {
-            const res = await fetch(`/api/users/check?name=${encodeURIComponent(name)}`);
-            const result = await res.text();
-
-            if (result !== "FOUND") {
-                alert("الاسم غير مسجل. اضغط على تسجيل لاعب جديد أولًا.");
-                return;
+            const me = await api('POST', '/api/auth/login', { name, password }, { allow401: true });
+            goHome(me);
+        } catch (err) {
+            if (err.code === 'PASSWORD_REQUIRED') {
+                passwordField.hidden = false;
+                document.getElementById('loginPassword').focus();
+            } else {
+                toast(err.message, 'error');
             }
-
-            localStorage.setItem('fullName', name);
-            window.location.href = 'player.html';
-        } catch (e) {
-            alert("حدث خطأ أثناء تسجيل الدخول");
-            console.error(e);
+        } finally {
+            btn.disabled = false;
         }
-    }
+    });
 
-    async function adminLogin() {
-        const password = document.getElementById('adminPassword').value;
+    registerForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const body = {
+            fullName: document.getElementById('regName').value.trim(),
+            phone: document.getElementById('regPhone').value.trim(),
+            age: parseInt(document.getElementById('regAge').value, 10) || 0,
+            working: document.getElementById('regWorking').checked,
+        };
 
-        if (!password) {
-            alert("يرجى إدخال كلمة السر");
-            return;
-        }
+        if (!body.fullName) return toast('اكتب اسمك الثلاثي', 'error');
+        if (!body.phone) return toast('اكتب رقم جوالك', 'error');
+        if (body.age < 5 || body.age > 99) return toast('اكتب عمرك', 'error');
 
+        const btn = document.getElementById('registerBtn');
+        btn.disabled = true;
         try {
-            const res = await fetch('/api/users/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: pendingAdminName,
-                    password: password
-                })
-            });
-
-            const text = await res.text();
-
-            if (!res.ok || text !== "ADMIN") {
-                alert("كلمة السر غير صحيحة");
-                return;
-            }
-
-            localStorage.setItem('fullName', pendingAdminName);
-            window.location.href = 'admin.html';
-
-        } catch (e) {
-            alert("حدث خطأ أثناء دخول الأدمن");
-            console.error(e);
+            const me = await api('POST', '/api/auth/register', body, { allow401: true });
+            goHome(me);
+        } catch (err) {
+            toast(err.message, 'error');
+        } finally {
+            btn.disabled = false;
         }
-    }
-
-    async function registerPlayer() {
-        const rawName = document.getElementById('registerName').value;
-        const name = normalizeName(rawName);
-        const ageValue = document.getElementById('registerAge').value;
-        const working = document.getElementById('registerWorking').checked;
-        const email = document.getElementById('registerEmail').value.trim();
-
-        if (!name) {
-            alert("يرجى إدخال الاسم الثلاثي");
-            return;
-        }
-
-        if (!ageValue) {
-            alert("يرجى إدخال العمر");
-            return;
-        }
-        if (!email) {
-            alert("يرجى إدخال البريد الإلكتروني");
-            return;
-        }
-
-        const age = parseInt(ageValue, 10);
-
-        if (isNaN(age) || age <= 0) {
-            alert("يرجى إدخال عمر صحيح");
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/users/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fullName: name,
-                    age: age,
-                    working: working,
-                    email: email
-                })
-            });
-
-            const text = await res.text();
-
-            if (!res.ok) {
-                alert(text);
-                return;
-            }
-
-            alert("تم تسجيل اللاعب بنجاح");
-            hideRegisterPopup();
-            document.getElementById('username').value = name;
-        } catch (e) {
-            alert("حدث خطأ أثناء التسجيل");
-            console.error(e);
-        }
-    }
+    });
 </script>
-
 </body>
 </html>
