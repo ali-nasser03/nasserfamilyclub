@@ -91,7 +91,7 @@ function confirmBox(title, message, okLabel = 'تأكيد', danger = false) {
     });
 }
 
-const AR = 'ar-JO-u-nu-latn'; // Levantine month names, Western digits
+const AR = 'ar-EG-u-nu-latn'; // month names like نوفمبر، ديسمبر, Western digits
 
 function parseLocal(iso) {
     // "2026-11-05T19:30:00" is local club time; parse without time-zone shifts

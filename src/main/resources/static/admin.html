@@ -169,14 +169,17 @@
 
     function newMatchText(match) {
         return [
-            '⚽ مباراة جديدة - نادي عائلة ناصر',
+            '⚽🔥 تم حجز الملعب 🔥⚽',
             '',
-            `📅 ${whenText(match)}`,
+            `📅 يوم ${matchDay(match.dateTime)}`,
+            `⏰ الساعة ${matchTime(match.dateTime)}`,
             `📍 ${match.location}`,
             match.note ? `📝 ${match.note}` : null,
             '',
-            'صوّتوا إذا جايين أو معتذرين 👇',
+            '🗳️ الكل يصوّت 👇',
             SITE_URL,
+            '',
+            '💪 يلا يا شباب! 🏆',
         ].filter(line => line !== null).join('\n');
     }
 
