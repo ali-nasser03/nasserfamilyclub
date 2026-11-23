@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>فحص تسجيل الدخول</title>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 16px; background: #f1f2ee; color: #1d1f1c; }
+        h1 { font-size: 1.2rem; margin: 0 0 12px; }
+        input, button { font: inherit; width: 100%; box-sizing: border-box; min-height: 46px; border-radius: 10px; }
+        input { border: 1.5px solid #ccc; padding: 8px 12px; margin-bottom: 10px; }
+        button { border: 0; background: #161616; color: #fff; font-weight: 700; }
+        ol { padding-inline-start: 22px; }
+        li { margin: 8px 0; line-height: 1.5; }
+        .ok { color: #2f7d3a; font-weight: 700; }
+        .bad { color: #c3302a; font-weight: 700; }
+        code { direction: ltr; unicode-bidi: embed; font-size: .8rem; word-break: break-all; }
+    </style>
+</head>
+<body>
+<!-- Diagnostic page: checks each step of signing in on this browser. Safe to delete later. -->
+<h1>فحص تسجيل الدخول</h1>
+<input id="name" placeholder="اسمك الثلاثي">
+<button id="run">ابدأ الفحص</button>
+<ol id="out"></ol>
+
+<script>
+    const out = document.getElementById('out');
+    const results = [];
+    const add = (label, ok, detail = '') => {
+        results.push([label, ok, detail]);
+        const li = document.createElement('li');
+        li.innerHTML = `${label}: <span class="${ok ? 'ok' : 'bad'}">${ok ? 'تمام' : 'مشكلة'}</span> <code></code>`;
+        li.querySelector('code').textContent = detail;
+        out.appendChild(li);
+    };
+
+    async function call(method, path, body, token) {
+        const headers = {};
+        if (body) headers['Content-Type'] = 'application/json';
+        if (token) headers['X-Auth-Token'] = token;
+        const res = await fetch(path, { method, headers, cache: 'no-store', body: body ? JSON.stringify(body) : undefined });
+        let text = '';
+        try { text = await res.text(); } catch {}
+        return { status: res.status, text };
+    }
+
+    // Step after "navigation": this page was reopened with the key in the address
+    const hash = location.hash.match(/^#t=([0-9a-f]{64})$/);
+    if (hash) {
+        try {
+            const previous = JSON.parse(new URLSearchParams(location.search).get('r') || '[]');
+            previous.forEach(([label, ok, detail]) => add(label, ok, detail));
+        } catch {}
+        (async () => {
+            add('٦. وصل المفتاح للصفحة الجديدة', true, 'length ' + hash[1].length);
+            let stored = null;
+            try { stored = localStorage.getItem('nfcDiag'); } catch (e) { stored = 'ERR ' + e.name; }
+            add('٧. التخزين بعد الانتقال', stored === hash[1], String(stored).slice(0, 12));
+            const board = await call('GET', '/api/board', null, hash[1]);
+            add('٨. صفحة اللاعب بالمفتاح بعد الانتقال', board.status === 200, 'HTTP ' + board.status);
+            add('المتصفح', true, navigator.userAgent);
+            history.replaceState(null, '', location.pathname + location.search);
+        })();
+    }
+
+    document.getElementById('run').onclick = async () => {
+        out.innerHTML = '';
+        const name = document.getElementById('name').value.trim();
+
+        let storageOk = false, storageDetail = '';
+        try {
+            localStorage.setItem('nfcDiagTest', '1');
+            storageOk = localStorage.getItem('nfcDiagTest') === '1';
+            localStorage.removeItem('nfcDiagTest');
+        } catch (e) { storageDetail = e.name + ': ' + e.message; }
+        add('١. التخزين بالمتصفح', storageOk, storageDetail);
+
+        if (!name) { add('اكتب اسمك فوق', false); return; }
+
+        let login;
+        try { login = await call('POST', '/api/auth/login', { name, password: '' }); }
+        catch (e) { add('٢. تسجيل الدخول', false, e.message); return; }
+        let token = null;
+        try { token = JSON.parse(login.text).token; } catch {}
+        add('٢. تسجيل الدخول', login.status === 200, 'HTTP ' + login.status + (login.status !== 200 ? ' ' + login.text.slice(0, 80) : ''));
+        add('٣. السيرفر أعطى مفتاح', !!token && token.length === 64, token ? 'length ' + token.length : 'no token');
+        if (!token) return;
+
+        const me = await call('GET', '/api/auth/me', null, token);
+        add('٤. السيرفر عرفني بالمفتاح', me.status === 200, 'HTTP ' + me.status);
+        const board = await call('GET', '/api/board', null, token);
+        add('٥. صفحة اللاعب بالمفتاح', board.status === 200, 'HTTP ' + board.status);
+
+        try { localStorage.setItem('nfcDiag', token); } catch {}
+        const li = document.createElement('li');
+        li.textContent = 'هلأ رح تنتقل الصفحة لحالها وتكمّل الفحص...';
+        out.appendChild(li);
+        const firstSteps = encodeURIComponent(JSON.stringify(results));
+        setTimeout(() => location.replace('diag.html?step=2&r=' + firstSteps + '#t=' + token), 1500);
+    };
+</script>
+</body>
+</html>
