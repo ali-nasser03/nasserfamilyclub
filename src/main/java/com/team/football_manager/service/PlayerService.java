@@ -5,6 +5,7 @@ import com.team.football_manager.dto.UpdatePlayerRequest;
 import com.team.football_manager.model.Role;
 import com.team.football_manager.model.User;
 import com.team.football_manager.repository.AttendanceRepository;
+import com.team.football_manager.repository.AuthTokenRepository;
 import com.team.football_manager.repository.PaymentRepository;
 import com.team.football_manager.repository.UserRepository;
 import com.team.football_manager.util.ApiException;
@@ -18,11 +19,14 @@ public class PlayerService {
     private final UserRepository users;
     private final AttendanceRepository attendance;
     private final PaymentRepository payments;
+    private final AuthTokenRepository tokens;
 
-    public PlayerService(UserRepository users, AttendanceRepository attendance, PaymentRepository payments) {
+    public PlayerService(UserRepository users, AttendanceRepository attendance, PaymentRepository payments,
+                         AuthTokenRepository tokens) {
         this.users = users;
         this.attendance = attendance;
         this.payments = payments;
+        this.tokens = tokens;
     }
 
     @Transactional
@@ -54,6 +58,7 @@ public class PlayerService {
         User user = findPlayer(id);
         attendance.deleteByPlayer_Id(id);
         payments.deleteByPlayer_Id(id);
+        tokens.deleteByUser_Id(id);
         users.delete(user);
     }
 

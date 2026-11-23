@@ -1,8 +1,9 @@
 package com.team.football_manager.config;
 
+import com.team.football_manager.controller.CurrentUser;
+import com.team.football_manager.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -14,6 +15,12 @@ import java.nio.charset.StandardCharsets;
  *  - other /api/**  -> any signed-in user (except /api/auth/**, which is open)
  */
 public class AuthInterceptor implements HandlerInterceptor {
+
+    private final CurrentUser currentUser;
+
+    public AuthInterceptor(CurrentUser currentUser) {
+        this.currentUser = currentUser;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -27,14 +34,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        HttpSession session = request.getSession(false);
-        Object userId = session == null ? null : session.getAttribute(SessionKeys.USER_ID);
+        User user = currentUser.find(request).orElse(null);
 
-        if (userId == null) {
+        if (user == null) {
             return reject(response, 401, "سجل دخول أولاً");
         }
 
-        if (path.startsWith("/api/admin/") && !Boolean.TRUE.equals(session.getAttribute(SessionKeys.IS_ADMIN))) {
+        if (path.startsWith("/api/admin/") && !user.isAdmin()) {
             return reject(response, 403, "هذه الصفحة للإدارة فقط");
         }
 

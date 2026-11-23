@@ -18,18 +18,39 @@ class ApiError extends Error {
     }
 }
 
+// ---------------------------------------------------------------- sign-in key
+// The server gives a key at login; we keep it on the phone and send it with every request.
+// (No cookies: Safari on iPhone didn't keep the sign-in cookie.)
+const TOKEN_KEY = 'nfcAuthToken';
+let memoryToken = null;
+
+function getToken() {
+    return storageGet(TOKEN_KEY) || memoryToken;
+}
+
+function setToken(token) {
+    memoryToken = token || null;
+    if (token) {
+        storageSet(TOKEN_KEY, token);
+    } else {
+        try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+    }
+}
+
 /**
  * Calls the API. Throws ApiError with the server's Arabic message.
- * On 401 (session expired) it sends the user back to the login page, unless `allow401` is set.
+ * On 401 (signed out) it sends the user back to the login page, unless `allow401` is set.
  */
 async function api(method, path, body, { allow401 = false } = {}) {
     let res;
     try {
         res = await fetch(path, {
             method,
-            credentials: 'same-origin',
             cache: 'no-store',
-            headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
+            headers: {
+                ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+                ...(getToken() ? { 'X-Auth-Token': getToken() } : {}),
+            },
             body: body !== undefined ? JSON.stringify(body) : undefined,
         });
     } catch (e) {
@@ -44,7 +65,8 @@ async function api(method, path, body, { allow401 = false } = {}) {
 
     if (!res.ok) {
         if (res.status === 401 && !allow401) {
-            // "?out" tells the login page not to redirect again, so a stale session can never loop
+            setToken(null);
+            // "?out" tells the login page not to redirect again, so it can never loop
             location.replace('login.html?out');
         }
         throw new ApiError(res.status, data?.error || 'صار خطأ، جرّب مرة ثانية', data?.code);
@@ -179,7 +201,8 @@ function voteListHtml(g, meId) {
 
 async function logout() {
     try { await api('POST', '/api/auth/logout', undefined, { allow401: true }); } catch { /* ignore */ }
-    location.replace('login.html');
+    setToken(null);
+    location.replace('login.html?out');
 }
 
 function storageGet(key) {

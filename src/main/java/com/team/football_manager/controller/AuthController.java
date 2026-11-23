@@ -26,17 +26,15 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public MeResponse login(@RequestBody LoginRequest body, HttpServletRequest request) {
+    public MeResponse login(@RequestBody LoginRequest body) {
         User user = auth.login(body);
-        currentUser.signIn(request, user);
-        return toMe(user);
+        return toMe(user, currentUser.signIn(user));
     }
 
     @PostMapping("/register")
-    public MeResponse register(@Valid @RequestBody RegisterRequest body, HttpServletRequest request) {
+    public MeResponse register(@Valid @RequestBody RegisterRequest body) {
         User user = players.register(body);
-        currentUser.signIn(request, user);
-        return toMe(user);
+        return toMe(user, currentUser.signIn(user));
     }
 
     @PostMapping("/logout")
@@ -47,10 +45,10 @@ public class AuthController {
 
     @GetMapping("/me")
     public MeResponse me(HttpServletRequest request) {
-        return toMe(currentUser.get(request));
+        return toMe(currentUser.get(request), null);
     }
 
-    private static MeResponse toMe(User user) {
-        return new MeResponse(user.getId(), user.getFullName(), user.isAdmin() ? "ADMIN" : "PLAYER");
+    private static MeResponse toMe(User user, String token) {
+        return new MeResponse(user.getId(), user.getFullName(), user.isAdmin() ? "ADMIN" : "PLAYER", token);
     }
 }

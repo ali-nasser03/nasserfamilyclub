@@ -9,7 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** Endpoints for any signed-in player. The player is taken from the session, never from the request body. */
+/** Endpoints for any signed-in player. The player is taken from the sign-in token, never from the request body. */
 @RestController
 @RequestMapping("/api")
 public class PlayerController {

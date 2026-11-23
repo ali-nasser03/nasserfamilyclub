@@ -18,7 +18,10 @@ Spring Boot 4 + PostgreSQL، والواجهة HTML و JavaScript عادي بدو
 | `SPRING_DATASOURCE_URL`                                     | نعم         | رابط قاعدة البيانات، مثل `jdbc:postgresql://host:5432/db`               |
 | `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` | حسب القاعدة |                                                                         |
 | `ADMIN_PASSWORD`                                            | أول مرة بس  | إذا ما في حساب إدارة، بينعمل حساب باسم `ADMIN_NAME` (الافتراضي `Admin`) |
-| `COOKIE_SECURE`                                             | مستحسن      | خليها `true` لما يكون الموقع على https                                  |
+
+## تسجيل الدخول
+
+لما حدا يسجّل دخول، السيرفر بيعطي المتصفح مفتاح، والصفحة بتحفظه وبتبعته مع كل طلب بـ header اسمه `X-Auth-Token`. ما في cookies، لأنه سفاري على الآيفون ما كان يحتفظ فيها. المفاتيح محفوظة بجدول `auth_tokens`، فالناس بتضل مسجّلة بعد كل تحديث للموقع، والمفتاح بيخلص بعد 90 يوم.
 
 ## التشغيل محلياً
 
