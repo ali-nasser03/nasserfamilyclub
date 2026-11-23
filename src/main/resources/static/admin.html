@@ -118,7 +118,7 @@
             render();
         } catch (err) {
             if (err.status === 403) {
-                location.replace('player.html');
+                goTo('player.html');
                 return;
             }
             toast(err.message, 'error');

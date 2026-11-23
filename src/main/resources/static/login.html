@@ -74,7 +74,7 @@
 
     function goHome(me) {
         if (me.token) setToken(me.token);
-        location.replace(me.role === 'ADMIN' ? 'admin.html' : 'player.html');
+        goTo(me.role === 'ADMIN' ? 'admin.html' : 'player.html');
     }
 
     // Already signed in? Skip the form. Not when we were just sent here because the session ended.

@@ -24,6 +24,32 @@ class ApiError extends Error {
 const TOKEN_KEY = 'nfcAuthToken';
 let memoryToken = null;
 
+// Safari with "Block All Cookies" also blocks localStorage. Then the key is handed to the next
+// page in the address (#t=...), kept in memory, and removed from the address right away.
+const storageWorks = (() => {
+    try {
+        localStorage.setItem('nfcTest', '1');
+        localStorage.removeItem('nfcTest');
+        return true;
+    } catch {
+        return false;
+    }
+})();
+
+(() => {
+    const m = location.hash.match(/^#t=([0-9a-f]{64})$/);
+    if (m) {
+        memoryToken = m[1];
+        history.replaceState(null, '', location.pathname + location.search);
+    }
+})();
+
+/** Go to another page of the site without losing the sign-in, even when storage is blocked. */
+function goTo(page) {
+    const token = getToken();
+    location.replace(!storageWorks && token ? `${page}#t=${token}` : page);
+}
+
 function getToken() {
     return storageGet(TOKEN_KEY) || memoryToken;
 }
